@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualization of Discrete Stratified Morse Theory</title>
+    <link href="style.css" type="text/css" rel="stylesheet">
+    <link href="bootstrap.min.css" type="text/css" rel="stylesheet">
+    <script src="d3.js"></script>
+    <script src="read.js"></script>
+    <script src="draw.js"></script>
+    <script src="DMT.js"></script>
+    <script src="script.js" async></script>
+</head>
+<body>
+<div class="container">
+    <h3>Visualization for Discrete Stratified Morse Theory</h3>
+    <hr>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <!--<div class="input-group-prepend">-->
+                            <!--<span class="input-group-text">Upload</span>-->
+                        <!--</div>-->
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="files">
+                            <label class="custom-file-label" for="files">Choose file</label>
+                        </div>
+                    </div>
+                    <!--<input type="file" id="files" name="files[]" multiple/>-->
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">Violator Simplices</h6>
+                    <ul id="violator">
+                    </ul>
+                    <hr>
+                    <h6 class="card-title">Critical Simplices</h6>
+                    <ul id="critical">
+                    </ul>
+                    <hr>
+                    <h6 class="card-title">Non-critical Simplex Pairs</h6>
+                    <ul id="noncritical">
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <svg id="canvas" width="400" height="400"></svg>
+        </div>
+    </div>
+</div>
+</body>
+</html>

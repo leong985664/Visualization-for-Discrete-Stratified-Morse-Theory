@@ -1,0 +1,39 @@
+.vertex {
+    fill: Silver;
+    stroke: black;
+}
+
+.violatorVertex {
+    fill: LightCoral;
+    stroke: red;
+}
+
+.criticalVertex {
+    fill: Gold;
+    stroke: Goldenrod;
+}
+
+.nonCriticalVertex {
+    fill: DarkSeaGreen;
+    stroke: green;
+}
+
+.edge {
+    stroke-width: 3px;
+    stroke: Silver;
+}
+
+.violatorEdge {
+    stroke-width: 3px;
+    stroke: LightCoral;
+}
+
+.criticalEdge {
+    stroke-width: 3px;
+    stroke: Gold;
+}
+
+.nonCriticalEdge {
+    stroke-width: 3px;
+    stroke: DarkSeaGreen;
+}

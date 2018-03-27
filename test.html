@@ -20,16 +20,27 @@
             <div class="card">
                 <div class="card-body">
                     <div class="input-group mb-3">
-                        <!--<div class="input-group-prepend">-->
-                            <!--<span class="input-group-text">Upload</span>-->
-                        <!--</div>-->
                         <div class="custom-file">
                             <input type="file" class="custom-file-input" id="files">
                             <label class="custom-file-label" for="files">Choose file</label>
                         </div>
                     </div>
-                    <!--<input type="file" id="files" name="files[]" multiple/>-->
+                    <button type="button" class="btn-sm btn-danger btn-block" onclick="markViolators()">Mark Violators
+                    </button>
+                    <button type="button" class="btn-sm btn-warning btn-block" onclick="markCriticals()">Mark
+                        Criticals
+                    </button>
+                    <button type="button" class="btn-sm btn-success btn-block" onclick="markPairs()">Mark
+                        Non-criticals
+                    </button>
+                    <button type="button" class="btn-sm btn-secondary btn-block" onclick="removePairs()">Remove
+                        Non-criticals
+                    </button>
+                    <button type="button" class="btn-sm btn-primary btn-block" onclick="rollback()">Rollback to origin
+                    </button>
                 </div>
+            </div>
+            <div class="card">
                 <div class="card-body">
                     <h6 class="card-title">Violator Simplices</h6>
                     <ul id="violator">
@@ -39,14 +50,16 @@
                     <ul id="critical">
                     </ul>
                     <hr>
-                    <h6 class="card-title">Non-critical Simplex Pairs</h6>
+                    <h6 class="card-title">Non-critical Simplices</h6>
                     <ul id="noncritical">
                     </ul>
                 </div>
             </div>
         </div>
         <div class="col-md-8">
-            <svg id="canvas" width="400" height="400"></svg>
+            <div class="card">
+                <svg id="canvas" width="500" height="500"></svg>
+            </div>
         </div>
     </div>
 </div>

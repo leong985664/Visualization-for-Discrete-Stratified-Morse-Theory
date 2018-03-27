@@ -4,19 +4,39 @@ let numEdges = 0;
 let vertices = new Array();
 let faces = new Array();
 let edges = new Array();
+let file;
+let dmt;
 
-document.getElementById('files').addEventListener('change', handleFileSelect);
+let input = document.getElementById('files');
+input.onchange = function (event) {
+    file = event.target.files[0];
+    handleFileSelect(file);
+    this.value = null;
+}
 
-let dmt = new DMT(vertices, faces, edges);
-dmt.updateCritical();
-dmt.updatePair();
-dmt.updateViolator();
+function markViolators() {
+    dmt.updateViolator();
+}
 
+function markCriticals() {
+    dmt.updateCritical();
+}
 
+function markPairs() {
+    dmt.updatePair();
+}
 
-function handleFileSelect(evt)
+function removePairs() {
+    dmt.removePair();
+}
+
+function rollback() {
+    dmt.clear();
+    handleFileSelect(file);
+}
+
+function handleFileSelect(file)
 {
-    let file = evt.target.files[0]; // FileList object
     let reader = new FileReader();
     reader.readAsText(file);
 
@@ -30,7 +50,7 @@ function handleFileSelect(evt)
         faces = read.getFaces();
         edges = read.getEdges();
 
-        let draw = new Draw(vertices, faces, edges);
-        draw.draw();
+        dmt = new DMT(vertices, faces, edges);
+        dmt.draw();
     }
 }

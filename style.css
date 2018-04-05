@@ -1,5 +1,5 @@
 .vertex {
-    fill: Silver;
+    fill: Gainsboro;
     stroke: black;
 }
 
@@ -36,4 +36,9 @@
 .nonCriticalEdge {
     stroke-width: 3px;
     stroke: DarkSeaGreen;
+}
+
+.face {
+    stroke: none;
+    fill: Gainsboro;
 }

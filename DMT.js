@@ -5,7 +5,6 @@ class DMT {
         this.faces = faces;
         this.edges = edges;
 
-        // change for 3d
         this.xmin = Infinity;
         this.xmax = -Infinity;
         this.ymin = Infinity;
@@ -32,7 +31,15 @@ class DMT {
         this.yScale = d3.scaleLinear()
             .domain([this.ymin, this.ymax])
             .range([50,350])
+    }
 
+    clear() {
+        d3.selectAll('li').remove();
+        this.canvas.selectAll('g').remove();
+        this.fgroup = this.canvas.append('g')
+            .attr('id', 'fgroup');
+        this.ftgroup = this.canvas.append('g')
+            .attr('id', 'ftgroup');
         this.egroup = this.canvas.append('g')
             .attr('id', 'egroup');
         this.etgroup = this.canvas.append('g')
@@ -43,18 +50,55 @@ class DMT {
             .attr('id', 'vtgroup');
     }
 
-    clear() {
-        d3.selectAll('li').remove();
-        this.egroup.selectAll('line').remove();
-        this.etgroup.selectAll('text').remove();
-        this.vgroup.selectAll('circle').remove();
-        this.vtgroup.selectAll('text').remove();
-    }
-
     draw() {
         this.clear();
+        this.drawFaces();
         this.drawEdges();
         this.drawVertices();
+        this.computeUL();
+    }
+
+    drawFaces() {
+        let xScale = this.xScale;
+        let yScale = this.yScale;
+
+        let fs = this.fgroup.selectAll('polygon')
+            .data(this.faces);
+        fs.exit().remove();
+        fs = fs.enter().append('polygon').merge(fs)
+            .attr('points', function (d) {
+                let result = '';
+                for (let p of d.point) {
+                    result += xScale(p.xcoord)+','+yScale(p.ycoord)+' '
+                }
+                return result;
+            })
+            .attr('class', 'face')
+            .attr('id', function (d) {
+                return 'f'+d.id;
+            })
+
+        let fts = this.ftgroup.selectAll('text')
+            .data(this.faces);
+        fts.exit().remove();
+        fts = fts.enter().append('text').merge(fts)
+            .attr('x', function (d) {
+                let sum = 0;
+                for (let p of d.point) {
+                    sum += p.xcoord;
+                }
+                return xScale(sum/d.point.length);
+            })
+            .attr('y', function(d) {
+                let sum = 0;
+                for (let p of d.point) {
+                    sum += p.ycoord;
+                }
+                return yScale(sum/d.point.length);
+            })
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .text(d => d.value)
     }
 
     drawEdges() {
@@ -112,7 +156,74 @@ class DMT {
             .text(d => d.value)
     }
 
+    computeUL() {
+        this.uVertex = new Map();
+        for (let v of this.vertices) {
+            let uv = [];
+            for (let arm of v.arms) {
+                if (arm.value <= v.value)
+                    uv.push(arm);
+            }
+            this.uVertex.set(v, uv);
+        }
+        this.lFace = new Map();
+        for (let f of this.faces) {
+            let lf = [];
+            for (let l of f.line) {
+                if (l.value >= f.value)
+                    lf.push(l);
+            }
+            this.lFace.set(f, lf);
+        }
+        this.uEdge = new Map();
+        this.lEdge = new Map();
+        for (let e of this.edges) {
+            let ue = [];
+            for (let w of e.wings) {
+                if (w.value <= e.value)
+                    ue.push(w);
+            }
+            let le = [];
+            if (e.start.value >= e.value)
+                le.push(e.start)
+            if (e.end.value >= e.value)
+                le.push(e.end)
+            this.uEdge.set(e, ue);
+            this.lEdge.set(e, le);
+        }
+    }
+
     findViolator() {
+        let violatorVertex = new Array();
+        let violatorEdge = new Array();
+        let violatorFace = new Array();
+        this.uVertex.forEach(function (value, key, map) {
+            console.log(value)
+            console.log(key)
+            if (value.length > 1) {
+                violatorVertex.push(key);
+            }
+        });
+        this.lFace.forEach(function (value, key, map) {
+            console.log(value)
+            console.log(key)
+            if (value.length)
+        })
+        for (let key of violatorVertex) {
+            this.uVertex.delete(key);
+
+        }
+
+
+
+
+
+
+        this.violatorVertex = violatorVertex;
+    }
+
+
+    findViolator2() {
         this.violatorEdge = new Array();
         for (let e of this.edges) {
             let nbr1 = e.start.value;
@@ -138,23 +249,23 @@ class DMT {
 
     updateViolator() {
         this.findViolator();
-        console.log(this.violatorEdge)
-        for (let e of this.violatorEdge) {
-            d3.select('#e'+e.id)
-                .attr('class', 'violatorEdge')
-        }
-        for (let v of this.violatorVertex) {
-            d3.select('#v'+v.id)
-                .attr('class', 'violatorVertex')
-        }
-        let violator = d3.select('#violator');
-        let violatorList = violator.selectAll('li')
-            .data(this.violatorVertex.concat(this.violatorEdge))
-        violatorList.exit().remove();
-        violatorList = violatorList.enter().append('li').merge(violatorList)
-            .html(function (d) {
-                return 'f<sup>-1</sup>('+d.value+')';
-            })
+        // console.log(this.violatorEdge)
+        // for (let e of this.violatorEdge) {
+        //     d3.select('#e'+e.id)
+        //         .attr('class', 'violatorEdge')
+        // }
+        // for (let v of this.violatorVertex) {
+        //     d3.select('#v'+v.id)
+        //         .attr('class', 'violatorVertex')
+        // }
+        // let violator = d3.select('#violator');
+        // let violatorList = violator.selectAll('li')
+        //     .data(this.violatorVertex.concat(this.violatorEdge))
+        // violatorList.exit().remove();
+        // violatorList = violatorList.enter().append('li').merge(violatorList)
+        //     .html(function (d) {
+        //         return 'f<sup>-1</sup>('+d.value+')';
+        //     })
     }
 
     findCritical() {
@@ -305,7 +416,7 @@ class DMT {
             }
         }
         this.redraw();
-        
+
     }
 
     changeCoord(e, f) {

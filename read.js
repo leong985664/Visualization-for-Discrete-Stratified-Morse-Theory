@@ -24,8 +24,8 @@ class Read {
             let coord = lines[i].split(' ');
             let result = {
                 id: i-2,
-                armsid: [],
                 arms: [],
+                wings: [],
                 xcoord: parseFloat(coord[0]),
                 ycoord: parseFloat(coord[1]),
                 value: parseInt(coord[2])
@@ -37,8 +37,8 @@ class Read {
             let coord = lines[i].split(' ');
             let result = {
                 id: i-2-this.numVertices-this.numFaces,
-                startid: parseInt(coord[0]),
-                endid: parseInt(coord[1]),
+                wings: [],
+                // heads: [this.vertices[parseInt(coord[0])],this.vertices[parseInt(coord[1])]],
                 start: this.vertices[parseInt(coord[0])],
                 end: this.vertices[parseInt(coord[1])],
                 value: parseInt(coord[2])
@@ -46,23 +46,54 @@ class Read {
             this.edges.push(result);
         }
 
+        for (let i = 2 + this.numVertices; i <= 1 + this.numVertices + this.numFaces; i++) {
+            let coord = lines[i].split(' ');
+            let pntidx = [];
+            let pnt = [];
+            for (let idx of coord.slice(0,-1)) {
+                pntidx.push(parseInt(idx));
+                pnt.push(this.vertices[parseInt(idx)]);
+            }
+            let lnidx = [];
+            let ln = [];
+            for (let e of this.edges) {
+                if (pntidx.includes(e.start.id) && pntidx.includes(e.end.id)) {
+                    lnidx.push(e.id);
+                    ln.push(e);
+                }
+            }
+            let result = {
+                id: i-2-this.numVertices,
+                point: pnt,
+                pointIndex: pntidx,
+                line: ln,
+                lineIndex: lnidx,
+                value: parseInt(coord.slice(-1)[0])
+            }
+            this.faces.push(result);
+        }
+
         for (let v of this.vertices) {
             for (let e of this.edges) {
-                if (e.startid == v.id || e.endid == v.id) {
-                    v.armsid.push(e.id);
+                if (e.start.id == v.id || e.end.id == v.id) {
                     v.arms.push(e);
+                }
+            }
+            for (let f of this.faces) {
+                if (f.pointIndex.includes(v.id)) {
+                    v.wings.push(f);
                 }
             }
         }
 
-        // change for 3d
-        // for (let i = 2 + this.numVertices; i <= 1 + this.numVertices + this.numFaces; i++) {
-        //     let coord = lines[i].split(' ');
-        //     for (let j = 0; j <= coord.length-1; j++) {
-        //         console.log(coord[j]);
-        //     }
-        //     faces.push(coord);
-        // }
+        for (let e of this.edges) {
+            for (let f of this.faces) {
+                if (f.lineIndex.includes(e.id)) {
+                    e.wings.push(f);
+                }
+            }
+        }
+
     }
 
     getNumVertices() {

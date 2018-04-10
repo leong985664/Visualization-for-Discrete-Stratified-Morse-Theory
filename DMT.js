@@ -157,26 +157,26 @@ class DMT {
     }
 
     computeUL() {
-        this.uVertex = new Map();
+        this.uVertex = new Array();
         for (let v of this.vertices) {
             let uv = [];
             for (let arm of v.arms) {
                 if (arm.value <= v.value)
                     uv.push(arm);
             }
-            this.uVertex.set(v, uv);
+            this.uVertex.push(uv);
         }
-        this.lFace = new Map();
+        this.lFace = new Array();
         for (let f of this.faces) {
             let lf = [];
             for (let l of f.line) {
                 if (l.value >= f.value)
                     lf.push(l);
             }
-            this.lFace.set(f, lf);
+            this.lFace.push(lf);
         }
-        this.uEdge = new Map();
-        this.lEdge = new Map();
+        this.uEdge = new Array();
+        this.lEdge = new Array();
         for (let e of this.edges) {
             let ue = [];
             for (let w of e.wings) {
@@ -188,8 +188,8 @@ class DMT {
                 le.push(e.start)
             if (e.end.value >= e.value)
                 le.push(e.end)
-            this.uEdge.set(e, ue);
-            this.lEdge.set(e, le);
+            this.uEdge.push(ue);
+            this.lEdge.push(le);
         }
     }
 
@@ -197,26 +197,15 @@ class DMT {
         let violatorVertex = new Array();
         let violatorEdge = new Array();
         let violatorFace = new Array();
-        this.uVertex.forEach(function (value, key, map) {
-            console.log(value)
-            console.log(key)
-            if (value.length > 1) {
-                violatorVertex.push(key);
+        console.log(this.uVertex)
+        for (let i = this.uVertex.length-1; i >= 0; i--) {
+            if (this.uVertex[i].length > 1) {
+                violatorVertex.push(i);
+                // this.uVertex.splice(i, 1);
             }
-        });
-        this.lFace.forEach(function (value, key, map) {
-            console.log(value)
-            console.log(key)
-            if (value.length)
-        })
-        for (let key of violatorVertex) {
-            this.uVertex.delete(key);
-
         }
-
-
-
-
+        console.log(violatorVertex);
+        console.log(this.uVertex);
 
 
         this.violatorVertex = violatorVertex;

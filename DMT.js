@@ -31,21 +31,37 @@ class DMT {
         this.yScale = d3.scaleLinear()
             .domain([this.ymin, this.ymax])
             .range([50, 350])
+
+        //define arrow head
+        this.canvas.append('svg:defs').append('svg:marker')
+            .attr('id', 'arrowhead')
+            .attr('refX', 3)
+            .attr('refY', 3)
+            .attr('markerWidth', 15)
+            .attr('markerHeight', 15)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M 0 0 6 3 0 6 1.5 3')
+            .attr('class', 'arrowHead')
     }
 
     clear() {
         d3.selectAll('li').remove();
         this.canvas.selectAll('g').remove();
+
         this.fgroup = this.canvas.append('g')
             .attr('id', 'fgroup');
-        this.ftgroup = this.canvas.append('g')
-            .attr('id', 'ftgroup');
         this.egroup = this.canvas.append('g')
             .attr('id', 'egroup');
-        this.etgroup = this.canvas.append('g')
-            .attr('id', 'etgroup');
+        this.vegroup = this.canvas.append('g')
+            .attr('id', 'vegroup');
         this.vgroup = this.canvas.append('g')
             .attr('id', 'vgroup');
+
+        this.ftgroup = this.canvas.append('g')
+            .attr('id', 'ftgroup');
+        this.etgroup = this.canvas.append('g')
+            .attr('id', 'etgroup');
         this.vtgroup = this.canvas.append('g')
             .attr('id', 'vtgroup');
     }
@@ -294,13 +310,12 @@ class DMT {
         });
 
         //Find critical edges
-        for (let key in this.uEdge.keys()) {
+        for (let key of this.uEdge.keys()) {
             let u = this.uEdge.get(key);
             let l = this.lEdge.get(key);
-            if (u != null && l != null && u.length + l.length == 0) {
+            if (u != null && l != null && u.length == 0 && l.length == 0) {
                 criticalEdge.push(key);
             }
-
         }
 
         //Find critical faces
@@ -314,7 +329,7 @@ class DMT {
         this.criticalEdge = criticalEdge;
         this.criticalFace = criticalFace;
     }
-    
+
     updateCritical() {
         this.findCritical();
         for (let e of this.criticalEdge) {
@@ -342,36 +357,100 @@ class DMT {
     }
 
     findPair() {
-        this.pair = new Array();
-        for (let e of this.edges) {
-            let nbr1 = e.start.value;
-            let nbr2 = e.end.value;
-            let value = e.value;
-            if (nbr1 < value && value <= nbr2) {
-                this.pair.push([e.end, e]);
+        let vePair = new Array();
+        let efPair = new Array();
+        this.uVertex.forEach(function (value, key, map) {
+            if (value != null && value.length == 1) {
+                vePair.push([key, value[0]]);
             }
-            if (nbr2 < value && value <= nbr1) {
-                this.pair.push([e.start, e]);
+        })
+        this.uEdge.forEach(function (value, key, map) {
+            if (value != null && value.length == 1) {
+                efPair.push([key, value[0]]);
             }
-        }
+        })
+
+        this.vePair = vePair;
+        this.efPair = efPair;
     }
 
     updatePair() {
         this.findPair();
-        for (let p of this.pair) {
-            d3.select('#v' + p[0].id)
-                .attr('class', 'nonCriticalVertex')
-            d3.select('#e' + p[1].id)
-                .attr('class', 'nonCriticalEdge')
-        }
+        this.drawArrow();
+
+        let test = this.vePair.concat(this.efPair)
         let noncritical = d3.select('#noncritical');
         let noncriticalList = noncritical.selectAll('li')
-            .data(this.pair)
+            .data(test)
         noncriticalList.exit().remove();
         noncriticalList = noncriticalList.enter().append('li').merge(noncriticalList)
             .html(function (d) {
                 return 'f<sup>-1</sup>(' + d[0].value + ') => f<sup>-1</sup>(' + d[1].value + ')';
             })
+    }
+
+    drawArrow() {
+        let xScale = this.xScale;
+        let yScale = this.yScale;
+
+        let ve = this.vegroup.selectAll('line')
+            .data(this.vePair)
+        ve.exit().remove();
+        ve = ve.enter().append('line').merge(ve)
+            .attr('id', function (d) {
+                return 'arrow'+d[0].id+'to'+d[1].id;
+            })
+            .attr('x1', d => xScale(d[0].xcoord))
+            .attr('y1', d => yScale(d[0].ycoord))
+            .attr('x2', d => xScale(d[0].xcoord))
+            .attr('y2', d => yScale(d[0].ycoord))
+            .attr('class', 'arrowBody')
+            .attr('marker-end', 'url(#arrowhead)')
+            .transition()
+            .duration(1000)
+            .attr('x1', d => xScale(d[0].xcoord))
+            .attr('y1', d => yScale(d[0].ycoord))
+            .attr('x2', function (d) {
+                let start = d[1].start.xcoord;
+                let end = d[1].end.xcoord;
+                return xScale((start+end)/2);
+            })
+            .attr('y2', function (d) {
+                let start = d[1].start.ycoord;
+                let end = d[1].end.ycoord;
+                return yScale((start+end)/2);
+            })
+    }
+
+    redraw() {
+        this.updateEdges();
+        this.updateVertices();
+        this.updateViolator();
+        this.updateCritical();
+        this.updatePair();
+    }
+
+    removePair() {
+        for (let p of this.pair) {
+            //whether pair with start point
+            let isStart = true;
+            if (p[1].end.id == p[0].id)
+                isStart = false;
+
+            //update the vertex on the other side of the edge
+            if (isStart) {
+                this.changeCoord(this.vertices[p[1].end.id], p[0])
+            } else {
+                this.changeCoord(this.vertices[p[1].start.id], p[0])
+            }
+        }
+        this.redraw();
+
+    }
+
+    changeCoord(e, f) {
+        e.xcoord = f.xcoord;
+        e.ycoord = f.ycoord;
     }
 
     updateEdges() {
@@ -422,34 +501,4 @@ class DMT {
             .attr('y', d => yScale(d.ycoord))
     }
 
-    redraw() {
-        this.updateEdges();
-        this.updateVertices();
-        this.updateViolator();
-        this.updateCritical();
-        this.updatePair();
-    }
-
-    removePair() {
-        for (let p of this.pair) {
-            //whether pair with start point
-            let isStart = true;
-            if (p[1].end.id == p[0].id)
-                isStart = false;
-
-            //update the vertex on the other side of the edge
-            if (isStart) {
-                this.changeCoord(this.vertices[p[1].end.id], p[0])
-            } else {
-                this.changeCoord(this.vertices[p[1].start.id], p[0])
-            }
-        }
-        this.redraw();
-
-    }
-
-    changeCoord(e, f) {
-        e.xcoord = f.xcoord;
-        e.ycoord = f.ycoord;
-    }
 }

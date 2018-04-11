@@ -13,11 +13,6 @@
     stroke: Goldenrod;
 }
 
-.nonCriticalVertex {
-    fill: DarkSeaGreen;
-    stroke: green;
-}
-
 .edge {
     stroke-width: 3px;
     stroke: Silver;
@@ -33,11 +28,6 @@
     stroke: Gold;
 }
 
-.nonCriticalEdge {
-    stroke-width: 3px;
-    stroke: DarkSeaGreen;
-}
-
 .face {
     stroke: none;
     fill: Gainsboro;
@@ -51,4 +41,23 @@
 .criticalFace {
     stroke: none;
     fill: Khaki;
+}
+
+.nonCriticalVertex {
+    fill: DarkSeaGreen;
+    stroke: green;
+}
+
+.nonCriticalEdge {
+    stroke-width: 3px;
+    stroke: DarkSeaGreen;
+}
+
+.arrowHead {
+    fill: MediumSeaGreen;
+}
+
+.arrowBody {
+    stroke-width: 3px;
+    stroke: MediumSeaGreen;
 }

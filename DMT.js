@@ -27,10 +27,10 @@ class DMT {
 
         this.xScale = d3.scaleLinear()
             .domain([this.xmin, this.xmax])
-            .range([50,350])
+            .range([50, 350])
         this.yScale = d3.scaleLinear()
             .domain([this.ymin, this.ymax])
-            .range([50,350])
+            .range([50, 350])
     }
 
     clear() {
@@ -69,13 +69,13 @@ class DMT {
             .attr('points', function (d) {
                 let result = '';
                 for (let p of d.point) {
-                    result += xScale(p.xcoord)+','+yScale(p.ycoord)+' '
+                    result += xScale(p.xcoord) + ',' + yScale(p.ycoord) + ' '
                 }
                 return result;
             })
             .attr('class', 'face')
             .attr('id', function (d) {
-                return 'f'+d.id;
+                return 'f' + d.id;
             })
 
         let fts = this.ftgroup.selectAll('text')
@@ -87,14 +87,14 @@ class DMT {
                 for (let p of d.point) {
                     sum += p.xcoord;
                 }
-                return xScale(sum/d.point.length);
+                return xScale(sum / d.point.length);
             })
-            .attr('y', function(d) {
+            .attr('y', function (d) {
                 let sum = 0;
                 for (let p of d.point) {
                     sum += p.ycoord;
                 }
-                return yScale(sum/d.point.length);
+                return yScale(sum / d.point.length);
             })
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'central')
@@ -115,15 +115,15 @@ class DMT {
             .attr('y2', d => yScale(d.end.ycoord))
             .attr('class', 'edge')
             .attr('id', function (d) {
-                return 'e'+d.id;
+                return 'e' + d.id;
             })
 
         let ets = this.etgroup.selectAll('text')
             .data(this.edges);
         ets.exit().remove();
         ets = ets.enter().append('text').merge(ets)
-            .attr('x', d => xScale((d.start.xcoord+d.end.xcoord)/2))
-            .attr('y', d => yScale((d.start.ycoord+d.end.ycoord)/2))
+            .attr('x', d => xScale((d.start.xcoord + d.end.xcoord) / 2))
+            .attr('y', d => yScale((d.start.ycoord + d.end.ycoord) / 2))
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'central')
             .text(d => d.value)
@@ -142,7 +142,7 @@ class DMT {
             .attr('r', 10)
             .attr('class', 'vertex')
             .attr('id', function (d) {
-                return 'v'+d.id;
+                return 'v' + d.id;
             })
 
         let vts = this.vtgroup.selectAll('text')
@@ -197,118 +197,147 @@ class DMT {
         let violatorVertex = new Array();
         let violatorEdge = new Array();
         let violatorFace = new Array();
+
+        //Find vertex violators
         this.uVertex.forEach(function (value, key, map) {
-            console.log(value)
-            console.log(key)
-            if (value.length > 1) {
+            if (value != null && value.length > 1) {
                 violatorVertex.push(key);
             }
         });
-        this.lFace.forEach(function (value, key, map) {
-            console.log(value)
-            console.log(key)
-            if (value.length)
+
+        //Find edge violators
+        this.uEdge.forEach(function (value, key, map) {
+            if (value != null && value.length > 1) {
+                violatorEdge.push(key);
+            }
         })
-        for (let key of violatorVertex) {
-            this.uVertex.delete(key);
+        this.lEdge.forEach(function (value, key, map) {
+            if (value != null && value.length > 1) {
+                violatorEdge.push(key);
+            }
+        })
 
-        }
+        //Find face violators
+        this.lFace.forEach(function (value, key, map) {
+            if (value != null && value.length > 1) {
+                violatorFace.push(key);
+            }
+        })
 
-
-
-
-
+        //Remove violators from UL list
+        this.removeViolator(violatorVertex, this.uVertex, this.lEdge);
+        this.removeViolator(violatorEdge, this.uEdge, this.lFace);
+        this.removeViolator(violatorEdge, this.lEdge, this.uVertex);
+        this.removeViolator(violatorFace, this.lFace, this.uEdge);
 
         this.violatorVertex = violatorVertex;
+        this.violatorEdge = violatorEdge;
+        this.violatorFace = violatorFace;
     }
 
-
-    findViolator2() {
-        this.violatorEdge = new Array();
-        for (let e of this.edges) {
-            let nbr1 = e.start.value;
-            let nbr2 = e.end.value;
-            let value = e.value;
-            if (value <= nbr1 && value <= nbr2) {
-                this.violatorEdge.push(e)
+    removeViolator(violator, map, map2) {
+        for (let v of violator) {
+            for (let key of map.keys()) {
+                if (key.id == v.id) {
+                    map.set(key, null);
+                }
             }
-        }
-        this.violatorVertex = new Array();
-        for (let v of this.vertices) {
-            let isViolator = true;
-            let value = v.value;
-            for (let e of v.arms) {
-                if (value < e.value)
-                    isViolator = false;
-            }
-            if (isViolator) {
-                this.violatorVertex.push(v)
+            for (let value of map2.values()) {
+                if (value == null) {
+                    continue;
+                }
+                for (let i = value.length-1; i >= 0; i--) {
+                    if (value[i].id == v.id) {
+                        value.splice(i,1);
+                    }
+                }
             }
         }
     }
 
     updateViolator() {
         this.findViolator();
-        // console.log(this.violatorEdge)
-        // for (let e of this.violatorEdge) {
-        //     d3.select('#e'+e.id)
-        //         .attr('class', 'violatorEdge')
-        // }
-        // for (let v of this.violatorVertex) {
-        //     d3.select('#v'+v.id)
-        //         .attr('class', 'violatorVertex')
-        // }
-        // let violator = d3.select('#violator');
-        // let violatorList = violator.selectAll('li')
-        //     .data(this.violatorVertex.concat(this.violatorEdge))
-        // violatorList.exit().remove();
-        // violatorList = violatorList.enter().append('li').merge(violatorList)
-        //     .html(function (d) {
-        //         return 'f<sup>-1</sup>('+d.value+')';
-        //     })
+        for (let e of this.violatorEdge) {
+            d3.select('#e'+e.id)
+                .attr('class', 'violatorEdge')
+        }
+        for (let v of this.violatorVertex) {
+            d3.select('#v'+v.id)
+                .attr('class', 'violatorVertex')
+        }
+        for (let f of this.violatorFace) {
+            d3.select('#f'+f.id)
+                .attr('class', 'violatorFace')
+        }
+
+        let test = this.violatorVertex.concat(this.violatorEdge).concat(this.violatorFace);
+        let violator = d3.select('#violator');
+        let violatorList = violator.selectAll('li')
+            .data(test)
+        violatorList.exit().remove();
+        violatorList = violatorList.enter().append('li').merge(violatorList)
+            .html(function (d) {
+                return 'f<sup>-1</sup>('+d.value+')';
+            })
     }
 
     findCritical() {
-        this.criticalEdge = new Array();
-        for (let e of this.edges) {
-            let nbr1 = e.start.value;
-            let nbr2 = e.end.value;
-            let value = e.value;
-            if (value > nbr1 && value > nbr2) {
-                this.criticalEdge.push(e);
-            }
-        }
-        this.criticalVertex = new Array();
-        for (let v of this.vertices) {
-            let isCritical = true;
-            let value = v.value;
-            for (let e of v.arms) {
-                if (value > e.value)
-                    isCritical = false;
-            }
-            if (isCritical) {
-                this.criticalVertex.push(v);
-            }
-        }
-    }
+        let criticalVertex = new Array();
+        let criticalEdge = new Array();
+        let criticalFace = new Array();
 
+        //Find critical vertices
+        this.uVertex.forEach(function (value, key, map) {
+            if (value != null && value.length == 0) {
+                criticalVertex.push(key);
+            }
+        });
+
+        //Find critical edges
+        for (let key in this.uEdge.keys()) {
+            let u = this.uEdge.get(key);
+            let l = this.lEdge.get(key);
+            if (u != null && l != null && u.length + l.length == 0) {
+                criticalEdge.push(key);
+            }
+
+        }
+
+        //Find critical faces
+        this.lFace.forEach(function (value, key, map) {
+            if (value != null && value.length > 1) {
+                criticalFace.push(key);
+            }
+        })
+
+        this.criticalVertex = criticalVertex;
+        this.criticalEdge = criticalEdge;
+        this.criticalFace = criticalFace;
+    }
+    
     updateCritical() {
         this.findCritical();
         for (let e of this.criticalEdge) {
-            d3.select('#e'+e.id)
+            d3.select('#e' + e.id)
                 .attr('class', 'criticalEdge')
         }
         for (let v of this.criticalVertex) {
-            d3.select('#v'+v.id)
+            d3.select('#v' + v.id)
                 .attr('class', 'criticalVertex')
         }
+        for (let f of this.criticalFace) {
+            d3.select('#f' + f.id)
+                .attr('class', 'criticalFace')
+        }
+
+        let test = this.criticalVertex.concat(this.criticalEdge).concat(this.criticalFace)
         let critical = d3.select('#critical');
         let criticalList = critical.selectAll('li')
-            .data(this.criticalVertex.concat(this.criticalEdge))
+            .data(test)
         criticalList.exit().remove();
         criticalList = criticalList.enter().append('li').merge(criticalList)
             .html(function (d) {
-                return 'f<sup>-1</sup>('+d.value+')';
+                return 'f<sup>-1</sup>(' + d.value + ')';
             })
     }
 
@@ -330,9 +359,9 @@ class DMT {
     updatePair() {
         this.findPair();
         for (let p of this.pair) {
-            d3.select('#v'+p[0].id)
+            d3.select('#v' + p[0].id)
                 .attr('class', 'nonCriticalVertex')
-            d3.select('#e'+p[1].id)
+            d3.select('#e' + p[1].id)
                 .attr('class', 'nonCriticalEdge')
         }
         let noncritical = d3.select('#noncritical');
@@ -341,7 +370,7 @@ class DMT {
         noncriticalList.exit().remove();
         noncriticalList = noncriticalList.enter().append('li').merge(noncriticalList)
             .html(function (d) {
-                return 'f<sup>-1</sup>('+d[0].value+') => f<sup>-1</sup>('+d[1].value+')';
+                return 'f<sup>-1</sup>(' + d[0].value + ') => f<sup>-1</sup>(' + d[1].value + ')';
             })
     }
 
@@ -366,8 +395,8 @@ class DMT {
         ets = ets.enter().append('text').merge(ets)
             .transition()
             .duration(1000)
-            .attr('x', d => xScale((d.start.xcoord+d.end.xcoord)/2))
-            .attr('y', d => yScale((d.start.ycoord+d.end.ycoord)/2))
+            .attr('x', d => xScale((d.start.xcoord + d.end.xcoord) / 2))
+            .attr('y', d => yScale((d.start.ycoord + d.end.ycoord) / 2))
     }
 
     updateVertices() {

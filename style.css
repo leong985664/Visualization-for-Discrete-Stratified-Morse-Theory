@@ -42,3 +42,13 @@
     stroke: none;
     fill: Gainsboro;
 }
+
+.violatorFace {
+    stroke: none;
+    fill: LightCoral;
+}
+
+.criticalFace {
+    stroke: none;
+    fill: Khaki;
+}

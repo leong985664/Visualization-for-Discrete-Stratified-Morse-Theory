@@ -26,12 +26,15 @@ function markPairs() {
     dmt.updatePair();
 }
 
-function removePairs() {
-    dmt.removePair();
+function removeEFPairs() {
+    dmt.efPairRemove();
+}
+
+function removeVEPairs() {
+    dmt.vePairRemove();
 }
 
 function rollback() {
-    dmt.clear();
     handleFileSelect(file);
 }
 

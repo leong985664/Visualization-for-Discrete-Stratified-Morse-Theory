@@ -62,19 +62,14 @@ class DMT {
 
         this.fgroup = this.canvas.append('g')
             .attr('id', 'fgroup')
-            // .attr('transform', 'rotate(180), translate(-500,-500)');
         this.egroup = this.canvas.append('g')
             .attr('id', 'egroup')
-            // .attr('transform', 'rotate(180), translate(-500,-500)');
         this.vegroup = this.canvas.append('g')
             .attr('id', 'vegroup')
-            // .attr('transform', 'rotate(180), translate(-500,-500)');
         this.efgroup = this.canvas.append('g')
             .attr('id', 'efgroup')
-            // .attr('transform', 'rotate(180), translate(-500,-500)');
         this.vgroup = this.canvas.append('g')
             .attr('id', 'vgroup')
-            // .attr('transform', 'rotate(180), translate(-500,-500)');
 
         this.ftgroup = this.canvas.append('g')
             .attr('id', 'ftgroup')
@@ -142,22 +137,27 @@ class DMT {
     }
 
     checkExtreme() {
-        for (let e of this.criticalEdge) {
-            if (e.start.id!=e.end.id)
-                continue;
-            for (let f of this.faces) {
-                let point = f.point;
-                if (point[0].id != point[1].id)
-                    break;
-                if (point[1].id != point[2].id)
-                    break;
-                if (point[2].id != e.start.id)
-                    break;
-                this.canvas.select('#e' + e.id)
-                    .attr('class', 'criticalCombination')
-                this.canvas.select('#ft' + f.id)
-                    .attr('transform', 'translate(0,20)')
+
+        for (let f of this.faces) {
+            let point = f.point;
+            //check degenerated face with three points the same
+            if ((point[0].id == point[1].id) && (point[1].id == point[2].id)) {
+                for (let e of this.criticalEdge) {
+                    if (point[0].id != e.start.id || e.start.id != e.end.id)
+                        continue;
+                    this.canvas.select('#e' + e.id)
+                        .attr('class', 'criticalCombination')
+                    this.canvas.select('#ft' + f.id)
+                        .attr('transform', 'translate(0,20)')
+                }
             }
+            //check degenerated face with two points the same
+            if ((point[0].id == point[1].id) || (point[1].id == point[2].id) || (point[0].id == point[2].id)) {
+
+            }
+
+
+            //
         }
     }
 
@@ -223,53 +223,46 @@ class DMT {
             }
         }
 
-        // for (let edge of this.edges) {
-        //     let startx = this.xScale(edge.start.xcoord);
-        //     let starty = this.yScale(edge.start.ycoord);
-        //     let endx = this.xScale(edge.end.xcoord);
-        //     let endy = this.yScale(edge.end.ycoord);
-        //     let cx = (startx + endx) / 2;
-        //     let cy = (starty + endy) / 2;
-        //     let px = startx - cx
-        //     let py = starty - cy
-        //
-        //     // let path = d3.path();
-        //     // path.moveTo(startx, starty);
-        //     // path.lineTo(endx, endy);
-        //     // edge.d = path.toString();
-        //     // edge.textcoord = [cx,cy]
-        //
-        //     for (let i = 0; i < this.collinearEdges.length; i++) {
-        //         let group = this.collinearEdges[i];
-        //         for (let j = 0; j < group.length; j++) {
-        //             let member = group[j];
-        //             if (edge.id == member.id) {
-        //                 let path = d3.path();
-        //                 path.moveTo(startx, starty);
-        //                 let x = 0;
-        //                 let y = 0;
-        //                 let r = 0;
-        //                 if (j == 0) {
-        //                     x = -py+cx;
-        //                     y = px+cy;
-        //                     r = Math.sqrt(Math.pow(x-startx,2)+Math.pow(y-starty,2));
-        //                     path.arcTo(x,y,endx,endy,r)
-        //                     edge.d = path.toString();
-        //                     edge.textcoord = [(x+cx)/2, (y+cy)/2];
-        //                 } else if (j == 1) {
-        //                     x = py+cx;
-        //                     y = -px+cy;
-        //                     r = Math.sqrt(Math.pow(x-startx,2)+Math.pow(y-starty,2));
-        //                     path.arcTo(x,y,endx,endy,r)
-        //                     edge.d = path.toString();
-        //                     edge.textcoord = [(x+cx)/2, (y+cy)/2];
-        //                 }
-        //                 console.log(edge.d)
-        //             }
-        //         }
-        //     }
-        // }
-        // console.log(this.edges)
+        for (let group of this.collinearEdges) {
+            for (let i = 0; i < group.length; i++) {
+                let m = group[i];
+                let startx, starty, endx, endy = 0;
+                if (m.start.id == group[0].start.id) {
+                    startx = this.xScale(m.start.xcoord);
+                    starty = this.yScale(m.start.ycoord);
+                    endx = this.xScale(m.end.xcoord);
+                    endy = this.yScale(m.end.ycoord);
+                } else {
+                    startx = this.xScale(m.end.xcoord);
+                    starty = this.yScale(m.end.ycoord);
+                    endx = this.xScale(m.start.xcoord);
+                    endy = this.yScale(m.start.ycoord);
+                }
+                let cx = (startx + endx) / 2;
+                let cy = (starty + endy) / 2;
+                let px = startx - cx
+                let py = starty - cy
+                if (i == 0) {
+                    let x = -py + cx;
+                    let y = px + cy;
+                    let r = Math.sqrt(Math.pow(x - startx, 2) + Math.pow(y - starty, 2));
+                    let path = d3.path();
+                    path.moveTo(startx, starty);
+                    path.arcTo(x, y, endx, endy, r);
+                    m.d = path.toString();
+                    m.textcoord = [(x + cx) / 2, (y + cy) / 2];
+                } else if (i == 1) {
+                    let x = py + cx;
+                    let y = -px + cy;
+                    let r = Math.sqrt(Math.pow(x - startx, 2) + Math.pow(y - starty, 2));
+                    let path = d3.path();
+                    path.moveTo(startx, starty);
+                    path.arcTo(x, y, endx, endy, r)
+                    m.d = path.toString();
+                    m.textcoord = [(x + cx) / 2, (y + cy) / 2];
+                }
+            }
+        }
     }
 
     drawEdges() {

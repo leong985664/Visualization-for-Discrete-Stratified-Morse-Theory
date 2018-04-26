@@ -6,6 +6,7 @@ let faces = new Array();
 let edges = new Array();
 let file;
 let dmt;
+// let dmt2;
 
 let input = document.getElementById('files');
 input.onchange = function (event) {
@@ -16,22 +17,27 @@ input.onchange = function (event) {
 
 function markViolators() {
     dmt.updateViolator();
+    // dmt2.updateViolator();
 }
 
 function markCriticals() {
     dmt.updateCritical();
+    // dmt2.updateCritical();
 }
 
 function markPairs() {
     dmt.updatePair();
+    // dmt2.updatePair();
 }
 
 function removeEFPairs() {
     dmt.efPairRemove();
+    // dmt2.efPairRemove();
 }
 
 function removeVEPairs() {
     dmt.vePairRemove();
+    // dmt2.vePairRemove();
 }
 
 function rollback() {
@@ -55,5 +61,8 @@ function handleFileSelect(file)
 
         dmt = new DMT(vertices, faces, edges);
         dmt.draw();
+
+        // dmt2 = new DMT2(vertices, faces, edges);
+        // dmt2.draw();
     }
 }

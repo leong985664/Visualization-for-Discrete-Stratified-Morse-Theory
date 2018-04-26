@@ -22,20 +22,20 @@ class DMT {
         }
 
         this.canvas = d3.select('#canvas');
+        this.table = d3.select('#table');
         this.width = this.canvas.attr('width');
         this.height = this.canvas.attr('height');
 
         this.xScale = d3.scaleLinear()
             .domain([this.xmin, this.xmax])
-            .range([50, 350])
+            .range([50, 450])
         this.yScale = d3.scaleLinear()
             .domain([this.ymin, this.ymax])
-            .range([50, 350])
+            .range([450, 50])
 
         let path = d3.path();
         path.moveTo(50, 50);
-        path.arcTo(50, 100, 100, 100, 50);
-        console.log(path.toString())
+        path.arcTo(0, 50, 50, 50, 200);
 
         this.canvas.append("path")
             .attr("d", path.toString())
@@ -57,22 +57,27 @@ class DMT {
     }
 
     clear() {
-        d3.selectAll('li').remove();
+        this.table.selectAll('li').remove();
         this.canvas.selectAll('g').remove();
 
         this.fgroup = this.canvas.append('g')
-            .attr('id', 'fgroup');
+            .attr('id', 'fgroup')
+            // .attr('transform', 'rotate(180), translate(-500,-500)');
         this.egroup = this.canvas.append('g')
-            .attr('id', 'egroup');
+            .attr('id', 'egroup')
+            // .attr('transform', 'rotate(180), translate(-500,-500)');
         this.vegroup = this.canvas.append('g')
-            .attr('id', 'vegroup');
+            .attr('id', 'vegroup')
+            // .attr('transform', 'rotate(180), translate(-500,-500)');
         this.efgroup = this.canvas.append('g')
             .attr('id', 'efgroup')
+            // .attr('transform', 'rotate(180), translate(-500,-500)');
         this.vgroup = this.canvas.append('g')
-            .attr('id', 'vgroup');
+            .attr('id', 'vgroup')
+            // .attr('transform', 'rotate(180), translate(-500,-500)');
 
         this.ftgroup = this.canvas.append('g')
-            .attr('id', 'ftgroup');
+            .attr('id', 'ftgroup')
         this.etgroup = this.canvas.append('g')
             .attr('id', 'etgroup');
         this.vtgroup = this.canvas.append('g')
@@ -81,10 +86,13 @@ class DMT {
 
     draw() {
         this.clear();
+        this.computeUL();
+        this.findViolator();
+        this.findCritical();
+        this.findPair();
         this.drawFaces();
         this.drawEdges();
         this.drawVertices();
-        this.computeUL();
     }
 
     drawFaces() {
@@ -128,20 +136,155 @@ class DMT {
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'central')
             .text(d => d.value)
+            .attr('id', function (d) {
+                return 'ft' + d.id;
+            })
+    }
+
+    checkExtreme() {
+        for (let e of this.criticalEdge) {
+            if (e.start.id!=e.end.id)
+                continue;
+            for (let f of this.faces) {
+                let point = f.point;
+                if (point[0].id != point[1].id)
+                    break;
+                if (point[1].id != point[2].id)
+                    break;
+                if (point[2].id != e.start.id)
+                    break;
+                this.canvas.select('#e' + e.id)
+                    .attr('class', 'criticalCombination')
+                this.canvas.select('#ft' + f.id)
+                    .attr('transform', 'translate(0,20)')
+            }
+        }
+    }
+
+    checkSpecial() {
+
+        this.collinearEdges = [];
+        for (let i = 0; i < this.edges.length; i++) {
+            let e1 = this.edges[i];
+
+            //calculate coordinates
+            let startx = this.xScale(e1.start.xcoord);
+            let starty = this.yScale(e1.start.ycoord);
+            let endx = this.xScale(e1.end.xcoord);
+            let endy = this.yScale(e1.end.ycoord);
+            let cx = (startx + endx) / 2;
+            let cy = (starty + endy) / 2;
+            let px = startx - cx
+            let py = starty - cy
+
+            //check self-looping
+            if (startx == endx && starty == endy) {
+
+                //append path and textcoord for self-looping
+                let assistx = startx;
+                let assisty = starty + 50;
+                let pivotcx = (startx+assistx) / 2;
+                let pivotcy = (starty+assisty) / 2;
+                let pivotpx = startx - pivotcx;
+                let pivotpy = starty - pivotcy;
+                let x1 = -pivotpy + pivotcx;
+                let y1 = pivotpx + pivotcy;
+                let x2 = pivotpy + pivotcx;
+                let y2 = -pivotpx + pivotcy;
+                let r = Math.sqrt(Math.pow(x1-startx,2)+Math.pow(y1-starty,2));
+
+                let path = d3.path();
+                path.moveTo(startx, starty);
+                path.arcTo(x1, y1, assistx, assisty, r);
+                path.arcTo(x2, y2, endx, endy, r)
+
+                e1.d = path.toString();
+                e1.textcoord = [assistx, assisty]
+            } else {
+                //append path and textcoord for straight line
+                let path = d3.path();
+                path.moveTo(startx, starty);
+                path.lineTo(endx, endy);
+                e1.d = path.toString();
+                e1.textcoord = [cx,cy];
+            }
+
+            //check collinear
+            let temp = [e1];
+            for (let j = i + 1; j < this.edges.length; j++) {
+                let e2 = this.edges[j]
+                if ((e1.start.id == e2.start.id && e1.end.id == e2.end.id) ||
+                    (e1.start.id == e2.end.id && e1.end.id == e2.start.id)){
+                    temp.push(e2);
+                }
+            }
+            if (temp.length > 1) {
+                this.collinearEdges.push(temp)
+            }
+        }
+
+        // for (let edge of this.edges) {
+        //     let startx = this.xScale(edge.start.xcoord);
+        //     let starty = this.yScale(edge.start.ycoord);
+        //     let endx = this.xScale(edge.end.xcoord);
+        //     let endy = this.yScale(edge.end.ycoord);
+        //     let cx = (startx + endx) / 2;
+        //     let cy = (starty + endy) / 2;
+        //     let px = startx - cx
+        //     let py = starty - cy
+        //
+        //     // let path = d3.path();
+        //     // path.moveTo(startx, starty);
+        //     // path.lineTo(endx, endy);
+        //     // edge.d = path.toString();
+        //     // edge.textcoord = [cx,cy]
+        //
+        //     for (let i = 0; i < this.collinearEdges.length; i++) {
+        //         let group = this.collinearEdges[i];
+        //         for (let j = 0; j < group.length; j++) {
+        //             let member = group[j];
+        //             if (edge.id == member.id) {
+        //                 let path = d3.path();
+        //                 path.moveTo(startx, starty);
+        //                 let x = 0;
+        //                 let y = 0;
+        //                 let r = 0;
+        //                 if (j == 0) {
+        //                     x = -py+cx;
+        //                     y = px+cy;
+        //                     r = Math.sqrt(Math.pow(x-startx,2)+Math.pow(y-starty,2));
+        //                     path.arcTo(x,y,endx,endy,r)
+        //                     edge.d = path.toString();
+        //                     edge.textcoord = [(x+cx)/2, (y+cy)/2];
+        //                 } else if (j == 1) {
+        //                     x = py+cx;
+        //                     y = -px+cy;
+        //                     r = Math.sqrt(Math.pow(x-startx,2)+Math.pow(y-starty,2));
+        //                     path.arcTo(x,y,endx,endy,r)
+        //                     edge.d = path.toString();
+        //                     edge.textcoord = [(x+cx)/2, (y+cy)/2];
+        //                 }
+        //                 console.log(edge.d)
+        //             }
+        //         }
+        //     }
+        // }
+        // console.log(this.edges)
     }
 
     drawEdges() {
         let xScale = this.xScale;
         let yScale = this.yScale;
 
-        let es = this.egroup.selectAll('line')
+        this.checkSpecial();
+
+        let es = this.egroup.selectAll('path')
             .data(this.edges)
         es.exit().remove();
-        es = es.enter().append('line').merge(es)
-            .attr('x1', d => xScale(d.start.xcoord))
-            .attr('y1', d => yScale(d.start.ycoord))
-            .attr('x2', d => xScale(d.end.xcoord))
-            .attr('y2', d => yScale(d.end.ycoord))
+        es = es.enter().append('path').merge(es)
+            .attr('d', function (d) {
+                return d.d;
+            })
             .attr('class', 'edge')
             .attr('id', function (d) {
                 return 'e' + d.id;
@@ -151,8 +294,8 @@ class DMT {
             .data(this.edges);
         ets.exit().remove();
         ets = ets.enter().append('text').merge(ets)
-            .attr('x', d => xScale((d.start.xcoord + d.end.xcoord) / 2))
-            .attr('y', d => yScale((d.start.ycoord + d.end.ycoord) / 2))
+            .attr('x', d => d.textcoord[0])
+            .attr('y', d => d.textcoord[1])
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'central')
             .text(d => d.value)
@@ -223,22 +366,22 @@ class DMT {
     }
 
     updateViolator() {
-        this.findViolator();
+
         for (let e of this.violatorEdge) {
-            d3.select('#e'+e.id)
+            this.canvas.select('#e'+e.id)
                 .attr('class', 'violatorEdge')
         }
         for (let v of this.violatorVertex) {
-            d3.select('#v'+v.id)
+            this.canvas.select('#v'+v.id)
                 .attr('class', 'violatorVertex')
         }
         for (let f of this.violatorFace) {
-            d3.select('#f'+f.id)
+            this.canvas.select('#f'+f.id)
                 .attr('class', 'violatorFace')
         }
 
         let test = this.violatorVertex.concat(this.violatorEdge).concat(this.violatorFace);
-        let violator = d3.select('#violator');
+        let violator = this.table.select('#violator');
         let violatorList = violator.selectAll('li')
             .data(test)
         violatorList.exit().remove();
@@ -311,22 +454,22 @@ class DMT {
     }
 
     updateCritical() {
-        this.findCritical();
+
         for (let e of this.criticalEdge) {
-            d3.select('#e' + e.id)
+            this.canvas.select('#e' + e.id)
                 .attr('class', 'criticalEdge')
         }
         for (let v of this.criticalVertex) {
-            d3.select('#v' + v.id)
+            this.canvas.select('#v' + v.id)
                 .attr('class', 'criticalVertex')
         }
         for (let f of this.criticalFace) {
-            d3.select('#f' + f.id)
+            this.canvas.select('#f' + f.id)
                 .attr('class', 'criticalFace')
         }
 
         let test = this.criticalVertex.concat(this.criticalEdge).concat(this.criticalFace)
-        let critical = d3.select('#critical');
+        let critical = this.table.select('#critical');
         let criticalList = critical.selectAll('li')
             .data(test)
         criticalList.exit().remove();
@@ -334,6 +477,8 @@ class DMT {
             .html(function (d) {
                 return 'f<sup>-1</sup>(' + d.value + ')';
             })
+
+        this.checkExtreme();
     }
 
     findCritical() {
@@ -359,7 +504,7 @@ class DMT {
 
         //Find critical faces
         this.lFace.forEach(function (value, key, map) {
-            if (value != null && value.length > 1) {
+            if (value != null && value.length == 0) {
                 criticalFace.push(key);
             }
         })
@@ -370,11 +515,11 @@ class DMT {
     }
 
     updatePair() {
-        this.findPair();
+
         this.drawArrow();
 
         let test = this.vePair.concat(this.efPair)
-        let noncritical = d3.select('#noncritical');
+        let noncritical = this.table.select('#noncritical');
         let noncriticalList = noncritical.selectAll('li')
             .data(test)
         noncriticalList.exit().remove();
@@ -406,30 +551,24 @@ class DMT {
         let xScale = this.xScale;
         let yScale = this.yScale;
 
-        let ve = this.vegroup.selectAll('line')
+        let ve = this.vegroup.selectAll('path')
             .data(this.vePair)
         ve.exit().remove();
-        ve = ve.enter().append('line').merge(ve)
+        ve = ve.enter().append('path').merge(ve)
             .attr('id', function (d) {
                 return 've'+d[0].id+'to'+d[1].id;
             })
-            .attr('x1', d => xScale(d[0].xcoord))
-            .attr('y1', d => yScale(d[0].ycoord))
-            .attr('x2', d => xScale(d[0].xcoord))
-            .attr('y2', d => yScale(d[0].ycoord))
             .attr('class', 'arrowBody')
             .attr('marker-end', 'url(#arrowhead)')
-            .attr('x1', d => xScale(d[0].xcoord))
-            .attr('y1', d => yScale(d[0].ycoord))
-            .attr('x2', function (d) {
-                let start = d[1].start.xcoord;
-                let end = d[1].end.xcoord;
-                return xScale((start+end)/2);
-            })
-            .attr('y2', function (d) {
-                let start = d[1].start.ycoord;
-                let end = d[1].end.ycoord;
-                return yScale((start+end)/2);
+            .attr('d', function (d) {
+                let startx = xScale(d[0].xcoord)
+                let starty = yScale(d[0].ycoord)
+                let endx = d[1].textcoord[0]
+                let endy = d[1].textcoord[1]
+                let path = d3.path();
+                path.moveTo(startx, starty);
+                path.lineTo(endx, endy);
+                return path.toString()
             })
 
         let ef = this.efgroup.selectAll('line')
@@ -438,26 +577,6 @@ class DMT {
         ef = ef.enter().append('line').merge(ef)
             .attr('id', function (d) {
                 return 'ef'+d[0].id+'to'+d[1].id;
-            })
-            .attr('x1', function (d) {
-                let start = d[0].start.xcoord;
-                let end = d[0].end.xcoord;
-                return xScale((start+end)/2);
-            })
-            .attr('y1', function (d) {
-                let start = d[0].start.ycoord;
-                let end = d[0].end.ycoord;
-                return yScale((start+end)/2);
-            })
-            .attr('x2', function (d) {
-                let start = d[0].start.xcoord;
-                let end = d[0].end.xcoord;
-                return xScale((start+end)/2);
-            })
-            .attr('y2', function (d) {
-                let start = d[0].start.ycoord;
-                let end = d[0].end.ycoord;
-                return yScale((start+end)/2);
             })
             .attr('class', 'arrowBody')
             .attr('marker-end', 'url(#arrowhead)')
@@ -486,18 +605,6 @@ class DMT {
                 return yScale(sum/d[1].point.length);
             })
     }
-
-    // removeMark() {
-    //     this.vgroup.selectAll('circle')
-    //         .attr('class', 'vertex')
-    //     this.egroup.selectAll('line')
-    //         .attr('class', 'edge')
-    // }
-    //
-    // removeArrow() {
-    //     this.vegroup.selectAll('line').remove();
-    //     this.efgroup.selectAll('line').remove();
-    // }
 
     removeSimplex(simplex, list) {
         for (let i = list.length - 1; i >= 0; i--) {
@@ -558,21 +665,20 @@ class DMT {
     vePairRemove() {
 
         for (let v of this.criticalVertex) {
-            console.log(v)
-            console.log(v.arms)
             let removes = this.test(v);
             this.updateFaces();
             this.updateEdges();
             this.updateVertices()
+            this.computeUL();
             this.updateViolator();
             this.updateCritical();
-            this.updateArrow();
+            this.updatePair();
 
             let vertices2remove = removes[0]
             let edges2remove = removes[1]
-            this.test2(vertices2remove, edges2remove, v)
 
             setTimeout(() => {
+                this.test2(vertices2remove, edges2remove, v)
                 this.drawFaces();
                 this.drawEdges();
                 this.drawVertices();
@@ -580,7 +686,7 @@ class DMT {
                 this.updateViolator();
                 this.updateCritical();
                 this.updatePair();
-            }, 1200)
+            }, 200)
         }
     }
 
@@ -589,7 +695,6 @@ class DMT {
         let edges2remove = [];
 
         for (let e of v.arms) {
-            console.log(e)
             //continue only if the edge is non-critical
             let isNoncritical = true;
             for (let violator of this.violatorEdge) {
@@ -624,7 +729,7 @@ class DMT {
                 }
             } else {
                 for (let vertex of this.vertices) {
-                    if (vertex.id == en.start.id) {
+                    if (vertex.id == e.start.id) {
                         vertices2remove.push(vertex)
                         edges2remove.push(e)
                         this.changeCoord(vertex, v)
@@ -655,26 +760,21 @@ class DMT {
             //reset wings' point
             for (let f of vertex.wings) {
                 newwings.push(f)
-                for (let face of this.faces) {
-                    if (face.id == f.id) {
-                        for (let point of face.point) {
-                            if (point.id == vertex.id)
-                                point = v;
-                        }
-                    }
+                if (f.point[0].id == vertex.id) {
+                    f.point[0] = v;
+                } else if (f.point[1].id == vertex.id) {
+                    f.point[1] = v;
+                } else {
+                    f.point[2] = v;
                 }
             }
             //reset arms' point
             for (let e of vertex.arms) {
                 newarms.push(e)
-                for (let edge of this.edges) {
-                    if (edge.id == e.id) {
-                        if (e.start.id == vertex.id)
-                            edge.start = v;
-                        else
-                            edge.end = v;
-                    }
-                }
+                if (e.start.id == vertex.id)
+                    e.start = v;
+                else
+                    e.end = v;
             }
             this.removeVertex(vertex)
         }
@@ -701,7 +801,7 @@ class DMT {
         fs.exit().remove();
         fs = fs.enter().append('polygon').merge(fs)
             .transition()
-            .duration(1000)
+            .duration(100)
             .attr('points', function (d) {
                 let result = '';
                 for (let p of d.point) {
@@ -716,7 +816,7 @@ class DMT {
         fts.exit().remove();
         fts = fts.enter().append('text').merge(fts)
             .transition()
-            .duration(1000)
+            .duration(100)
             .attr('x', function (d) {
                 let sum = 0;
                 for (let p of d.point) {
@@ -735,29 +835,39 @@ class DMT {
     }
 
     updateEdges() {
+        this.checkSpecial();
+
         let xScale = this.xScale;
         let yScale = this.yScale;
 
-        let es = this.egroup.selectAll('line')
+        let es = this.egroup.selectAll('path')
             .data(this.edges)
         es.exit().remove();
-        es = es.enter().append('line').merge(es)
+        es = es.enter().append('path').merge(es)
             .transition()
-            .duration(1000)
-            .attr('x1', d => xScale(d.start.xcoord))
-            .attr('y1', d => yScale(d.start.ycoord))
-            .attr('x2', d => xScale(d.end.xcoord))
-            .attr('y2', d => yScale(d.end.ycoord))
-            .attr('class', 'edge')
+            .duration(100)
+            .attr('d', function (d) {
+                let path = d3.path();
+                path.moveTo(xScale(d.start.xcoord), yScale(d.start.ycoord));
+                path.lineTo(xScale(d.end.xcoord), yScale(d.end.ycoord));
+                return path.toString()
+                // return d.d;
+            })
+            // .attr('x1', d => xScale(d.start.xcoord))
+            // .attr('y1', d => yScale(d.start.ycoord))
+            // .attr('x2', d => xScale(d.end.xcoord))
+            // .attr('y2', d => yScale(d.end.ycoord))
 
         let ets = this.etgroup.selectAll('text')
             .data(this.edges);
         ets.exit().remove();
         ets = ets.enter().append('text').merge(ets)
             .transition()
-            .duration(1000)
-            .attr('x', d => xScale((d.start.xcoord + d.end.xcoord) / 2))
-            .attr('y', d => yScale((d.start.ycoord + d.end.ycoord) / 2))
+            .duration(100)
+            .attr('x', d => d.textcoord[0])
+            .attr('y', d => d.textcoord[1])
+            // .attr('x', d => xScale((d.start.xcoord + d.end.xcoord) / 2))
+            // .attr('y', d => yScale((d.start.ycoord + d.end.ycoord) / 2))
             .text(d => d.value)
     }
 
@@ -770,17 +880,16 @@ class DMT {
         vs.exit().remove();
         vs = vs.enter().append('circle').merge(vs)
             .transition()
-            .duration(1000)
+            .duration(100)
             .attr('cx', d => xScale(d.xcoord))
             .attr('cy', d => yScale(d.ycoord))
-            .attr('class', 'vertex')
 
         let vts = this.vtgroup.selectAll('text')
             .data(this.vertices);
         vts.exit().remove();
         vts = vts.enter().append('text').merge(vts)
             .transition()
-            .duration(1000)
+            .duration(100)
             .attr('x', d => xScale(d.xcoord))
             .attr('y', d => yScale(d.ycoord))
             .text(d => d.value)
@@ -790,29 +899,21 @@ class DMT {
         let xScale = this.xScale;
         let yScale = this.yScale;
 
-        let ve = this.vegroup.selectAll('line')
+        let ve = this.vegroup.selectAll('path')
             .data(this.vePair)
         ve.exit().remove();
-        ve = ve.enter().append('line').merge(ve)
+        ve = ve.enter().append('path').merge(ve)
             .transition()
-            .duration(1000)
-            .attr('x1', d => xScale(d[0].xcoord))
-            .attr('y1', d => yScale(d[0].ycoord))
-            .attr('x2', d => xScale(d[0].xcoord))
-            .attr('y2', d => yScale(d[0].ycoord))
-            .attr('class', 'arrowBody')
-            .attr('marker-end', 'url(#arrowhead)')
-            .attr('x1', d => xScale(d[0].xcoord))
-            .attr('y1', d => yScale(d[0].ycoord))
-            .attr('x2', function (d) {
-                let start = d[1].start.xcoord;
-                let end = d[1].end.xcoord;
-                return xScale((start+end)/2);
-            })
-            .attr('y2', function (d) {
-                let start = d[1].start.ycoord;
-                let end = d[1].end.ycoord;
-                return yScale((start+end)/2);
+            .duration(100)
+            .attr('d', function (d) {
+                let startx = xScale(d[0].xcoord)
+                let starty = yScale(d[0].ycoord)
+                let endx = d[1].textcoord[0]
+                let endy = d[1].textcoord[1]
+                let path = d3.path();
+                path.moveTo(startx, starty);
+                path.lineTo(endx, endy);
+                return path.toString()
             })
 
         let ef = this.efgroup.selectAll('line')
@@ -820,27 +921,7 @@ class DMT {
         ef.exit().remove();
         ef = ef.enter().append('line').merge(ef)
             .transition()
-            .duration(1000)
-            .attr('x1', function (d) {
-                let start = d[0].start.xcoord;
-                let end = d[0].end.xcoord;
-                return xScale((start+end)/2);
-            })
-            .attr('y1', function (d) {
-                let start = d[0].start.ycoord;
-                let end = d[0].end.ycoord;
-                return yScale((start+end)/2);
-            })
-            .attr('x2', function (d) {
-                let start = d[0].start.xcoord;
-                let end = d[0].end.xcoord;
-                return xScale((start+end)/2);
-            })
-            .attr('y2', function (d) {
-                let start = d[0].start.ycoord;
-                let end = d[0].end.ycoord;
-                return yScale((start+end)/2);
-            })
+            .duration(100)
             .attr('x1', function (d) {
                 let start = d[0].start.xcoord;
                 let end = d[0].end.xcoord;

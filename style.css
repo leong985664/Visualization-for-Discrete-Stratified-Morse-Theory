@@ -16,6 +16,7 @@
 .edge {
     stroke-width: 3px;
     stroke: Silver;
+    fill: None;
 }
 
 .violatorEdge {
@@ -26,6 +27,7 @@
 .criticalEdge {
     stroke-width: 3px;
     stroke: Gold;
+    fill: None;
 }
 
 .face {
@@ -51,6 +53,13 @@
 .nonCriticalEdge {
     stroke-width: 3px;
     stroke: DarkSeaGreen;
+    fill: None
+}
+
+.criticalCombination {
+    stroke-width: 3px;
+    stroke: Gold;
+    fill: Khaki;
 }
 
 .arrowHead {
@@ -60,4 +69,5 @@
 .arrowBody {
     stroke-width: 3px;
     stroke: MediumSeaGreen;
+    fill: None;
 }

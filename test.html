@@ -8,6 +8,7 @@
     <script src="d3.js"></script>
     <script src="read.js"></script>
     <script src="DMT.js"></script>
+    <script src="DMT2.js"></script>
     <script src="script.js" async></script>
 </head>
 <body>
@@ -15,7 +16,7 @@
     <h3>Visualization for Discrete Stratified Morse Theory</h3>
     <hr>
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-xl-3">
             <div class="card">
                 <div class="card-body">
                     <div class="input-group mb-3">
@@ -45,22 +46,65 @@
             <div class="card">
                 <div class="card-body">
                     <h6 class="card-title">Violator Simplices</h6>
-                    <ul id="violator">
-                    </ul>
+                    <!--<ul id="violator">-->
+                    <!--</ul>-->
                     <hr>
                     <h6 class="card-title">Critical Simplices</h6>
-                    <ul id="critical">
-                    </ul>
+                    <!--<ul id="critical">-->
+                    <!--</ul>-->
                     <hr>
                     <h6 class="card-title">Non-critical Simplices</h6>
-                    <ul id="noncritical">
-                    </ul>
+                    <!--<ul id="noncritical">-->
+                    <!--</ul>-->
                 </div>
             </div>
         </div>
-        <div class="col-md-9">
-            <div class="card">
-                <svg id="canvas" width="500" height="500"></svg>
+        <div class="col-xl-9">
+            <div class="row">
+                <div class="col-xl-6">
+                    <div class="card">
+                        <svg id="canvas" width="500" height="500"></svg>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="table" class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Violator Simplex</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><ul id="violator"></ul></td>
+                            </tr>
+                            </tbody>
+                            <thead>
+                            <tr>
+                                <th>Critical Simplex</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><ul id="critical"></ul></td>
+                            </tr>
+                            </tbody>
+                            <thead>
+                            <tr>
+                                <th>Noncritical Simplex</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><ul id="noncritical"></ul></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-xl-6">
+                    <div class="card">
+                        <svg id="canvas2" width="500" height="500"></svg>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

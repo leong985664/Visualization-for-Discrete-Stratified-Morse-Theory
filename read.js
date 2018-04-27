@@ -109,14 +109,14 @@ class Read {
     }
 
     getVertices() {
-        return this.vertices;
+        return this.vertices.slice(0);
     }
 
     getFaces() {
-        return this.faces;
+        return this.faces.slice(0);
     }
 
     getEdges() {
-        return this.edges;
+        return this.edges.slice(0);
     }
 }

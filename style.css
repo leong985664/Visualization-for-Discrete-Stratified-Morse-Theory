@@ -71,3 +71,12 @@
     stroke: MediumSeaGreen;
     fill: None;
 }
+
+ul li{
+    font-size: 0.5em;
+    list-style-type:none;
+}
+
+p {
+    font-size: 1.2em;
+}

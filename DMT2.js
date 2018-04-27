@@ -1,4 +1,4 @@
-class DMT {
+class DMT2 {
 
     constructor(vertices, faces, edges) {
         this.vertices = vertices;
@@ -24,11 +24,11 @@ class DMT {
         this.width = 500;
         this.height = 500;
 
-        this.canvas = d3.select('#canvas')
+        this.canvas = d3.select('#canvas2')
             .attr("preserveAspectRatio", "xMinYMin meet")
             .attr("viewBox","0 0 500 500");
 
-        this.table = d3.select('#table');
+        this.table = d3.select('#table2');
 
         this.xScale = d3.scaleLinear()
             .domain([this.xmin, this.xmax])
@@ -223,10 +223,8 @@ class DMT {
         }
     }
 
-    findViolator() {
+    findViolatorVertex() {
         let violatorVertex = new Array();
-        let violatorEdge = new Array();
-        let violatorFace = new Array();
 
         //Find vertex violators
         this.uVertex.forEach(function (value, key, map) {
@@ -234,6 +232,15 @@ class DMT {
                 violatorVertex.push(key);
             }
         });
+
+        //Remove violators from UL list
+        this.removeUL(violatorVertex, this.uVertex, this.lEdge);
+
+        this.violatorVertex = violatorVertex;
+    }
+
+    findViolatorEdge() {
+        let violatorEdge = new Array();
 
         //Find edge violators
         this.uEdge.forEach(function (value, key, map) {
@@ -247,6 +254,16 @@ class DMT {
             }
         })
 
+        //Remove violators from UL list
+        this.removeUL(violatorEdge, this.uEdge, this.lFace);
+        this.removeUL(violatorEdge, this.lEdge, this.uVertex);
+
+        this.violatorEdge = violatorEdge;
+    }
+
+    findViolatorFace() {
+        let violatorFace = new Array();
+
         //Find face violators
         this.lFace.forEach(function (value, key, map) {
             if (value != null && value.length > 1) {
@@ -255,14 +272,15 @@ class DMT {
         })
 
         //Remove violators from UL list
-        this.removeUL(violatorVertex, this.uVertex, this.lEdge);
-        this.removeUL(violatorEdge, this.uEdge, this.lFace);
-        this.removeUL(violatorEdge, this.lEdge, this.uVertex);
         this.removeUL(violatorFace, this.lFace, this.uEdge);
 
-        this.violatorVertex = violatorVertex;
-        this.violatorEdge = violatorEdge;
         this.violatorFace = violatorFace;
+    }
+
+    findViolator() {
+        this.findViolatorVertex();
+        this.findViolatorEdge();
+        this.findViolatorFace();
     }
 
     removeUL(violator, map, map2) {
@@ -352,7 +370,7 @@ class DMT {
         }
 
         let test = this.violatorVertex.concat(this.violatorEdge).concat(this.violatorFace);
-        let violator = this.table.select('#violator');
+        let violator = this.table.select('#violator2');
         let violatorList = violator.selectAll('li')
             .data(test)
         violatorList.exit().remove();
@@ -378,7 +396,7 @@ class DMT {
         }
 
         let test = this.criticalVertex.concat(this.criticalEdge).concat(this.criticalFace)
-        let critical = this.table.select('#critical');
+        let critical = this.table.select('#critical2');
         let criticalList = critical.selectAll('li')
             .data(test)
         criticalList.exit().remove();
@@ -395,7 +413,7 @@ class DMT {
         this.drawArrow();
 
         let test = this.vePair.concat(this.efPair)
-        let noncritical = this.table.select('#noncritical');
+        let noncritical = this.table.select('#noncritical2');
         let noncriticalList = noncritical.selectAll('li')
             .data(test)
         noncriticalList.exit().remove();
@@ -712,10 +730,10 @@ class DMT {
                 return path.toString()
                 // return d.d;
             })
-            // .attr('x1', d => xScale(d.start.xcoord))
-            // .attr('y1', d => yScale(d.start.ycoord))
-            // .attr('x2', d => xScale(d.end.xcoord))
-            // .attr('y2', d => yScale(d.end.ycoord))
+        // .attr('x1', d => xScale(d.start.xcoord))
+        // .attr('y1', d => yScale(d.start.ycoord))
+        // .attr('x2', d => xScale(d.end.xcoord))
+        // .attr('y2', d => yScale(d.end.ycoord))
 
         let ets = this.etgroup.selectAll('text')
             .data(this.edges);
@@ -933,8 +951,6 @@ class DMT {
                     path.arcTo(x, y, endx, endy, r)
                     m.d = path.toString();
                     m.textcoord = [(x + cx) / 2, (y + cy) / 2];
-                } else if (i == 2) {
-
                 }
             }
         }

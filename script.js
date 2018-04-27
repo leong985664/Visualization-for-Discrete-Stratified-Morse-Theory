@@ -1,12 +1,6 @@
-let numVertices = 0;
-let numFaces = 0;
-let numEdges = 0;
-let vertices = new Array();
-let faces = new Array();
-let edges = new Array();
 let file;
 let dmt;
-// let dmt2;
+let dmt2;
 
 let input = document.getElementById('files');
 input.onchange = function (event) {
@@ -17,27 +11,27 @@ input.onchange = function (event) {
 
 function markViolators() {
     dmt.updateViolator();
-    // dmt2.updateViolator();
+    dmt2.updateViolator();
 }
 
 function markCriticals() {
     dmt.updateCritical();
-    // dmt2.updateCritical();
+    dmt2.updateCritical();
 }
 
 function markPairs() {
     dmt.updatePair();
-    // dmt2.updatePair();
+    dmt2.updatePair();
 }
 
 function removeEFPairs() {
     dmt.efPairRemove();
-    // dmt2.efPairRemove();
+    dmt2.efPairRemove();
 }
 
 function removeVEPairs() {
     dmt.vePairRemove();
-    // dmt2.vePairRemove();
+    dmt2.vePairRemove();
 }
 
 function rollback() {
@@ -52,17 +46,18 @@ function handleFileSelect(file)
     reader.onload = function (e) {
         let read = new Read();
         read.readOFF(reader.result);
-        numVertices = read.getNumVertices();
-        numFaces = read.getNumFaces();
-        numEdges = read.getNumEdges();
-        vertices = read.getVertices();
-        faces = read.getFaces();
-        edges = read.getEdges();
-
-        dmt = new DMT(vertices, faces, edges);
+        // vertices = read.getVertices();
+        // faces = read.getFaces();
+        // edges = read.getEdges();
+        dmt = new DMT(read.getVertices(), read.getFaces(), read.getEdges());
         dmt.draw();
 
-        // dmt2 = new DMT2(vertices, faces, edges);
-        // dmt2.draw();
+        let read2 = new Read();
+        read2.readOFF(reader.result);
+        // vertices = read.getVertices();
+        // faces = read.getFaces();
+        // edges = read.getEdges();
+        dmt2 = new DMT2(read2.getVertices(), read2.getFaces(), read2.getEdges());
+        dmt2.draw();
     }
 }

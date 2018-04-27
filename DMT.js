@@ -22,11 +22,11 @@ class DMT {
         }
 
         this.width = 500;
-        this.height = 500;
+        this.height = 550;
 
         this.canvas = d3.select('#canvas')
             .attr("preserveAspectRatio", "xMinYMin meet")
-            .attr("viewBox","0 0 500 500");
+            .attr("viewBox","0 0 500 550");
 
         this.table = d3.select('#table');
 
@@ -88,17 +88,20 @@ class DMT {
         let xScale = this.xScale;
         let yScale = this.yScale;
 
-        let fs = this.fgroup.selectAll('polygon')
+        this.checkSpecialFaces();
+
+        let fs = this.fgroup.selectAll('path')
             .data(this.faces);
         fs.exit().remove();
-        fs = fs.enter().append('polygon').merge(fs)
-            .attr('points', function (d) {
-                let result = '';
-                for (let p of d.point) {
-                    result += xScale(p.xcoord) + ',' + yScale(p.ycoord) + ' '
-                }
-                return result;
-            })
+        fs = fs.enter().append('path').merge(fs)
+            // .attr('points', function (d) {
+            //     let result = '';
+            //     for (let p of d.point) {
+            //         result += xScale(p.xcoord) + ',' + yScale(p.ycoord) + ' '
+            //     }
+            //     return result;
+            // })
+            .attr('d', d => d.d)
             .attr('class', 'face')
             .attr('id', function (d) {
                 return 'f' + d.id;
@@ -134,7 +137,7 @@ class DMT {
         let xScale = this.xScale;
         let yScale = this.yScale;
 
-        this.checkSpecial();
+        this.checkSpecialEdges();
 
         let es = this.egroup.selectAll('path')
             .data(this.edges)
@@ -386,8 +389,6 @@ class DMT {
             .html(function (d) {
                 return 'f<sup>-1</sup>(' + d.value + ')';
             })
-
-        this.checkExtreme();
     }
 
     updatePair() {
@@ -545,6 +546,7 @@ class DMT {
                 this.updateViolator();
                 this.updateCritical();
                 this.updatePair();
+                console.log(this.faces)
             }, 200)
         }
     }
@@ -655,19 +657,20 @@ class DMT {
         let xScale = this.xScale;
         let yScale = this.yScale;
 
-        let fs = this.fgroup.selectAll('polygon')
+        let fs = this.fgroup.selectAll('path')
             .data(this.faces);
         fs.exit().remove();
-        fs = fs.enter().append('polygon').merge(fs)
+        fs = fs.enter().append('path').merge(fs)
             .transition()
             .duration(100)
-            .attr('points', function (d) {
-                let result = '';
-                for (let p of d.point) {
-                    result += xScale(p.xcoord) + ',' + yScale(p.ycoord) + ' '
-                }
-                return result;
-            })
+            // .attr('points', function (d) {
+            //     let result = '';
+            //     for (let p of d.point) {
+            //         result += xScale(p.xcoord) + ',' + yScale(p.ycoord) + ' '
+            //     }
+            //     return result;
+            // })
+            .attr('d', d => d.d)
             .attr('class', 'face')
 
         let fts = this.ftgroup.selectAll('text')
@@ -694,10 +697,10 @@ class DMT {
     }
 
     updateEdges() {
-        this.checkSpecial();
-
         let xScale = this.xScale;
         let yScale = this.yScale;
+
+        this.checkSpecialEdges();
 
         let es = this.egroup.selectAll('path')
             .data(this.edges)
@@ -807,32 +810,82 @@ class DMT {
             })
     }
 
-    checkExtreme() {
+    checkSpecialFaces() {
 
         for (let f of this.faces) {
-            let point = f.point;
-            //check degenerated face with three points the same
-            if ((point[0].id == point[1].id) && (point[1].id == point[2].id)) {
-                for (let e of this.criticalEdge) {
-                    if (point[0].id != e.start.id || e.start.id != e.end.id)
-                        continue;
-                    this.canvas.select('#e' + e.id)
-                        .attr('class', 'criticalCombination')
-                    this.canvas.select('#ft' + f.id)
-                        .attr('transform', 'translate(0,20)')
+
+            //check degeneration
+            let distinct = new Set();
+            for (let p of f.point) {
+                distinct.add(p)
+            }
+
+            //dealing with degeneration to a point and a line
+            if (distinct.size == 1) {
+                let it = distinct.values();
+                let p = it.next().value;
+                let startx = this.xScale(p.xcoord)
+                let starty = this.yScale(p.ycoord)
+                let assistx = startx;
+                let assisty = starty + 80;
+                let pivotcx = (startx+assistx) / 2;
+                let pivotcy = (starty+assisty) / 2;
+                let pivotpx = startx - pivotcx;
+                let pivotpy = starty - pivotcy;
+                let x1 = -pivotpy + pivotcx;
+                let y1 = pivotpx + pivotcy;
+                let x2 = pivotpy + pivotcx;
+                let y2 = -pivotpx + pivotcy;
+                let r = Math.sqrt(Math.pow(x1-startx,2)+Math.pow(y1-starty,2));
+
+                let path = d3.path();
+                path.moveTo(startx, starty);
+                path.arcTo(x1, y1, assistx, assisty, r);
+                path.arcTo(x2, y2, startx, starty, r)
+
+                f.d = path.toString();
+
+                this.canvas.select('#ft' + f.id)
+                    .attr('transform', 'translate(0,40)')
+            } else if (distinct.size == 2) {
+                //calculate coordinates
+                let it = distinct.values();
+                let p1 = it.next().value
+                let p2 = it.next().value
+                let startx = this.xScale(p1.xcoord);
+                let starty = this.yScale(p1.ycoord);
+                let endx = this.xScale(p2.xcoord);
+                let endy = this.yScale(p2.ycoord);
+                let cx = (startx + endx) / 2;
+                let cy = (starty + endy) / 2;
+                let px = startx - cx
+                let py = starty - cy
+                let x1 = -py + cx;
+                let y1 = px + cy;
+                let x2 = py + cx;
+                let y2 = -px + cy;
+                let r = Math.sqrt(Math.pow(x1 - startx, 2) + Math.pow(y1 - starty, 2));
+
+                let path = d3.path();
+                path.moveTo(startx, starty);
+                path.arcTo(x1, y1, endx, endy, r);
+                path.arcTo(x2, y2, startx, starty, r);
+                f.d = path.toString();
+            } else {
+                let startx = this.xScale(f.point[0].xcoord)
+                let starty = this.yScale(f.point[0].ycoord)
+                let path = d3.path();
+                path.moveTo(startx, starty);
+                for (let i = 1; i < f.point.length; i++) {
+                    let p = f.point[i];
+                    path.lineTo(this.xScale(p.xcoord), this.yScale(p.ycoord))
                 }
+                f.d = path.toString();
             }
-            //check degenerated face with two points the same
-            if ((point[0].id == point[1].id) || (point[1].id == point[2].id) || (point[0].id == point[2].id)) {
-
-            }
-
-
-            //
         }
     }
 
-    checkSpecial() {
+    checkSpecialEdges() {
 
         this.collinearEdges = [];
         for (let i = 0; i < this.edges.length; i++) {
@@ -853,7 +906,7 @@ class DMT {
 
                 //append path and textcoord for self-looping
                 let assistx = startx;
-                let assisty = starty + 50;
+                let assisty = starty + 80;
                 let pivotcx = (startx+assistx) / 2;
                 let pivotcy = (starty+assisty) / 2;
                 let pivotpx = startx - pivotcx;
@@ -867,7 +920,7 @@ class DMT {
                 let path = d3.path();
                 path.moveTo(startx, starty);
                 path.arcTo(x1, y1, assistx, assisty, r);
-                path.arcTo(x2, y2, endx, endy, r)
+                path.arcTo(x2, y2, startx, starty, r)
 
                 e1.d = path.toString();
                 e1.textcoord = [assistx, assisty]

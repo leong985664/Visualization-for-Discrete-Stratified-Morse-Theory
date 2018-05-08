@@ -1,0 +1,109 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{enumerate}
+\usepackage[shortlabels]{enumitem}
+\usepackage{graphicx}
+
+\begin{document}
+\title{CS 6965 Advanced Data Visualization\\{\bf Final Project Proposal}}
+\author{Yulong Liang}
+\maketitle
+
+\section{Team Members}
+\textbf{Name: } Yulong Liang	 \hspace{2ex} \textbf{uNID: } u1143816
+
+\section{Introduction}
+This project is a visualization for Stratified Discrete Morse Theory. 
+The idea of Discrete Morse Theory is to reduce data complexity by removing noncritical data while keeping the shape of the original data over a triangulated domain with Discrete Morse Function. Stratified Discrete Morse Theory is a refinement of Discrete Morse Theory which works for a triangulated domain with any function.
+In this project, I will visualize the process of implementing Stratified Discrete Morse Theory on a triangulated domain to reduce data complexity.
+
+\section{Project Objective}
+The first step of the project is given a triangulated 2-dimensional domain with Discrete Morse Function, producing and visualizing the gradient vector field (namely the noncritical simplex pairs and critical simplices) and perform simplicial removals on the noncritical simplices. 
+
+The second step of the project is given a 2-dimensional triangulated domain with any function, producing and visualizing the stratified gradient vector field (namely the violators as well as the noncritical simplex pairs and critical simplices within each stratum) and perform simplicial removals on the noncritical simplices for each stratum.
+
+The final step of the project is implementing step 1 and step 2 onto a 3-dimensional triangulated domain.
+
+\section{Data}
+For the first step, the data will be a 2d triangulation with Discrete Morse Function. For the second step, the data will be a 2d triangulation with any function. For the final step, the data will be a 3d triangulation, e.g., a terrain, or a 3d point cloud.
+
+\section{Background}
+Classical Morse Theory is a mathematical technique which was introduced by Marston Morse. It enables one to analyze the topology of a manifold by studying differentiable functions on that manifold. Morse theory allows one to find CW structures and handle decompositions on manifolds and to obtain substantial information about their homology.
+
+Discrete Morse Theory is a combinatorial adaptation of Morse theory developed by Robin Forman. Instead of a manifold which is continuous, it analyzes the topology of a simplicial complex which is discrete. Discrete Morse Theory allows one to find critical simplices, remove non-critical simplices and simplify the original simplicial complex.
+
+Stratified Discrete Morse Theory a refinement of Discrete Morse Theory proposed by Kevin Knudson and Bei Wang. It expands the usage of Discrete Morse Theory from simplicial complex with Discrete Morse Function to simplicial complex with any function.
+
+\section{Technical Contributions}
+For Forman's Discrete Morse Theory, there are some existing visualization research and implementations: Visualization of Discrete Gradient Construction, a research by Atilla Gyulassy, Joshua A. Levine, and Valerio Pascucci and Topology Toolkit, an open-source library and software collection for topological data analysis in scientific visualization.
+
+For Stratified Discrete Morse Theory which was proposed in 2018, there is no existing visualization implementation. In this project, I will implement a visualization for Stratified Discrete Morse Theory so that one can perform topological data analysis with the cutting-edge technique - Stratified Discrete Morse Theory.
+
+\section{Expected Outcomes and Deliverables}
+\paragraph{Level 1} Implement a web-based Stratified Discrete Morse Theory visualization. A web application will be provided.
+\paragraph{Level 2} Implement Stratified Discrete Morse Theory as a new TTK module. The following will be hand in,
+\begin{itemize}
+\item Source code;
+\item An example data-set;
+\item A ParaView state file using the new TTK module;
+\item A tutorial video illustrating the execution of the above ParaView state file as well as its step-by-step from-scratch reproduction;
+\end{itemize}
+
+\section{Evaluation}
+The final product should have the following functions,
+\begin{itemize}
+\item Display the simplicial complex;
+\item Markup the violators;
+\item Markup the critical simplices;
+\item Draw arrows indicating non-critical points;
+\item Remove all the non-critical points.
+\end{itemize}
+
+\section{Proposed Methods}
+For the representation, use graph theory. For the algorithms, use mathematical definitions. For visualization, use interactive techniques.
+
+\section{Software}
+\begin{itemize}
+\item Web Development: IntelliJ IDEA, Google Chrome
+\item TTK Module Development: Paraview, TTK, XCode
+\end{itemize}
+
+\section{Timelines}
+\begin{table}[h]
+\centering
+\begin{tabular}{c|c}
+Date&Milestone\\
+\hline \hline
+March 6th&Propose Final Project\\
+\hline
+March 20th&2d DMT web implementation\\
+\hline
+March 27th&2d SDMT web implementation\\
+\hline
+April 3rd&Evaluation on the possibility of building a TTK module\\
+\hline
+April 17th&Transfer of codes to build TTK module\\
+\hline
+April 24th&Finish Final Project
+\end{tabular}
+\end{table}
+
+\section{Project Summary}
+\begin{itemize}
+\item \textbf{What is an overview of your project?}\\
+This project is a visualization for Stratified Discrete Morse Theory in Topological Data Analysis.
+\item \textbf{Why is the project worth pursuing?}\\
+Because visualization is critical for Topological Data Analysis and there are no existing visualization implementations for Stratified Discrete Morse Theory.
+\item \textbf{What are your project objectives?}\\
+Build a visualization application to help researchers to understand and use Stratified Discrete Morse Theory. It would be terrific if I can build a new TTK module to make some contribution to TTK.
+\item \textbf{What are the questions you would like to answer?}\\
+What is Stratified Discrete Morse Theory? How does Stratified Discrete Morse Theory work?
+\item \textbf{What data will you plan to use?}\\
+Simulated data for 2d. Terrain data for 3d.
+\item \textbf{How can we evaluate how successful your project is once it is completed?}\\
+It should visualize the input, output and each steps of Stratified Discrete Morse Theory.
+\end{itemize}
+
+\end{document}

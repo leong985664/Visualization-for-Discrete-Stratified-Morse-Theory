@@ -1,0 +1,267 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{enumerate}
+\usepackage[shortlabels]{enumitem}
+\usepackage{graphicx}
+
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{bm}
+\usepackage[noend]{algpseudocode}
+
+\usepackage{hyperref}
+
+\begin{document}
+\title{A visualization for Discrete Stratified Morse Theory}
+\author{Yulong Liang}
+\maketitle
+
+\section{Introduction}
+
+This project is a visualization for Discrete Stratified Morse Theory. In this project, a web-based visualization tool was developed to illustrate the discrete gradient field after implementing Discrete Stratified Morse Theory on a simplicial complex and to demonstrate the process of performing simplification with Discrete Stratified Morse Theory on this discrete gradient field to reduce data complexity without changing homotopy type.
+
+\section{Related work}
+\paragraph{Classical Morse Theory} Classical Morse Theory is a mathematical technique which was introduced by Marston Morse. It studies Morse Function on a manifold to enable one to find CW-complices and handle decompositions to analyze the topology of that manifold.
+
+\paragraph{Discrete Morse Theory} is a combinatorial adaptation of Morse Theory developed by Robin Forman, which focuses on a discrete simplicial complex with Discrete Morse Function instead of a continuous manifold with Morse Function. The idea of Discrete Morse Theory is to recognize critical simplicial complices and non-critical simplicial comlice pairs and reduce data complexity by removing noncritical pairs while keeping the homotopy type of the original data.
+
+\paragraph{Discrete Stratified Morse Theory} Discrete Stratified Morse Theory is a expansion of Discrete Morse Theory proposed by Kevin Knudson and Bei Wang. It expands the usage of Discrete Morse Theory from a simplicial complex with Discrete Morse Function to a simplicial complex with any function by isolating violators into separate strata before normal procedure, which enables simplifications as well as many practical applications.
+
+\paragraph{Visualization} There are only few implementations of the visualization of Discrete Morse Theory and Discrete Stratified Morse Theory. Attila Gyulassy, Joshua A. Levine, and Valerio Pascucci developed a Visualization of Discrete Gradient Construction which shows the discrete gradient field of a 2d triangulation. However, there are no existing visualization for using Discrete Morse Theory/Discrete Stratified Morse Theory to perform data simplification.
+
+\section{Contribution overview}
+The project supports the following functions:
+\begin{itemize}
+\item Reading an \texttt{OFF} file of a 2d simplicial complex with function value on each simplex (vertex, edge and face) and illustrating on the canvas.
+\item Calculating and marking violator simplices, critical simplices and non-critical simplex pairs, namely discrete gradient field.
+\item Demonstrating the process of removing non-critical simplices and the result after running Discrete Stratified Morse Theory.\\
+
+This project can serve as an educational tool for researchers and college students to study and understanding the underlying process of Discrete Morse Theory and Discrete Stratified Morse Theory.
+\end{itemize}
+
+\section{Technical Background}
+\paragraph{Two Important Sets} For a simplicial complex $K$, let $\alpha^{(p)}$ denote a simplex with dimension $p$. Let $\alpha < \beta$ denote that simplex $\alpha$ is a face of $\beta$, or simplex $\beta$ is a coface of $\alpha$. Let $f: K \rightarrow \mathcal{R}$ denote the function over the simplical complex $K$. Then we can define the following sets,
+$$U(\alpha) = {\beta^{(p+1)} > \alpha | f(\beta) \le f(\alpha)}$$
+$$L(\alpha) = {\gamma^{(p−1)} < \alpha | f(\gamma) \ge f(\alpha)}$$
+That is to say, $U(\alpha)$ represents the cofaces of $\alpha$ (the adjacent simplices of $alpha$ which have dimensions that 1 dimension greater than $\alpha$ and values less than or equal to $\alpha$) and $L(\alpha)$ represents the faces of $\alpha$ (the adjacent simplices of $alpha$ which have dimensions that 1 dimension less than $\alpha$ and values greater than or equal to $\alpha$).
+
+\paragraph{Discrete Morse Function} A function $f: K \rightarrow \mathcal{R}$ is a Discrete Morse Function if $\forall \alpha^{p} \in K$,
+$$|U(\alpha)| \le 1 \quad and \quad |L(\alpha)| \le 1$$
+
+\paragraph{Stratified simplicial comlex} A stratified simplicial complex is a simplicial complex $K$ with a stratification equipped. A stratification of a simplicial complex $K$ is a collection of subsets of $K$ that can denote the original simplicial complex $K$.
+
+\paragraph{Discrete Stratified Morse Function} A function $f: K \rightarrow \mathcal{R}$ over a simplicial complex with stratification $s$ is a Discrete Stratified Morse Function if within each stratum,
+$$U(\alpha) = {\beta^{(p+1)} > \alpha | f(\beta) \le f(\alpha)}$$
+$$L(\alpha) = {\gamma^{(p−1)} < \alpha | f(\gamma) \ge f(\alpha)}$$
+
+\paragraph{Violator} A simplex is a violator if it satifies any one of the following conditions,
+$$|U(\alpha)| \ge 2$$
+$$|L(\alpha)| \ge 2$$
+$$|U(\alpha)| = 1 \cap |L(\alpha)| = 1$$
+
+\paragraph{Critical} A simplex is critical if it satifies the following conditions,
+$$|U(\alpha)| = 0 \cap |L(\alpha)| = 0$$
+
+\paragraph{Non-critical} A simplex is non-critical  if it satifies either of the following conditions,
+$$|U(\alpha)| = 1 \cap |L(\alpha)| = 0$$
+$$|U(\alpha)| = 0 \cap |L(\alpha)| = 1$$
+
+\section{Methods}
+\subsection{Marking}
+Given a simplicial complex with any function value on its simplices, we can calculate the two sets $U(\alpha)$, $L(\alpha)$ for each of its simplices. We can categorize the simplices into different groups, namely violators, criticals, or non-criticals by the cardinalities of the two sets.
+
+Typically, there are two algorithms for simplex categorization. The idea of the first algorithm is to first identify the violators. Then remove the violators from consideration. Finally identify the criticals and non-critical pairs.
+
+\begin{algorithm}
+	\caption{}\label{v1}
+	\begin{algorithmic}[0]
+	    \Function{dsmt1}{K}
+	    \ForAll{simplex $\alpha \in k$}
+	        \State Calculate set $U(\alpha)$
+	        \State Calculate set $L(\alpha)$
+	    \EndFor
+	    \ForAll{simplex $\alpha \in k$}
+	        \If{$|U(\alpha)| + |L(\alpha)| \ge 2$}
+	        \State Mark $\alpha$ as violator
+	        \EndIf
+	    \EndFor
+	    \State Remove violators from the two sets
+	    \ForAll{simplex $\alpha \in k$}
+	        \If{$|U(\alpha)| + |L(\alpha)| = 0$}
+	        \State Mark $\alpha$ as critical
+	        \EndIf
+	        \If{$|U(\alpha)| + |L(\alpha)| = 1$}
+	        \State Mark $\alpha$ as non-critical
+	        \EndIf
+	    \EndFor
+	    \State Pair the non-critical one with another by relationship
+	    
+		\Return all the violators, criticals, and non-critical pairs
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+The second algorithm is a refinement of the first algorithm. It deviates in the process of eliminating the violators. Instead of marking and removing all the violators simultaneously, this algorithm adopts a  iterative approach where it first eliminates the violators with the lowest dimension and calculate the two sets, then eliminates the violators with the second lowest dimension and calculate the two sets again. The algorithm will repeat until there are no more violators left. This algorithm can keep as many non-critical pairs as possible comparing to the former algorithm so that it can simplify the simplical complex to the largest extent.
+
+\newpage
+
+\begin{algorithm}
+	\caption{}\label{v2}
+	\begin{algorithmic}[0]
+	    \Function{dsmt2}{K}
+	    \ForAll{simplex $\alpha \in k$}
+	        \State Calculate set $U(\alpha)$
+	        \State Calculate set $L(\alpha)$
+	    \EndFor
+	    \For{dimension d = 1 to N}
+	    	\ForAll{simplex $\alpha \in k$ which has dimension = d}
+	            \If{$|U(\alpha)| + |L(\alpha)| \ge 2$}
+	            \State Mark $\alpha$ as violator
+	            \EndIf
+	        \EndFor
+	        \State Remove violators from the two sets
+	        \If{there are no violators}
+	            \State Break
+	        \EndIf
+	    \EndFor
+	    \ForAll{simplex $\alpha \in k$}
+	        \If{$|U(\alpha)| + |L(\alpha)| = 0$}
+	        \State Mark $\alpha$ as critical
+	        \EndIf
+	        \If{$|U(\alpha)| + |L(\alpha)| = 1$}
+	        \State Mark $\alpha$ as non-critical
+	        \EndIf
+	    \EndFor
+	    \State Pair the non-critical one with another by relationship
+	    
+		\Return all the violators, criticals, and non-critical pairs
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+Specifically, all violators will be marked as red, all criticals will be marked as yellow and all non-critical pairs will be marked by an arrow starting from the lower-dimensional simplex pointing to the higher-dimensional simplex to denote the gradient.
+
+\subsection{Removing}
+In this 2d edition, non-critical pairs involve two types,
+\begin{itemize}
+    \item Face-edge pair
+    \item Edge-vertex pair
+\end{itemize}
+
+\subsubsection{Removing Face-edge Pair}
+Face-edge pairs will be removed first. The method involves no animations. The algorithm is as follows,
+
+\begin{algorithm}
+	\caption{Removing Face-edge Pair}\label{v3}
+	\begin{algorithmic}[0]
+	    \Function{feRemoval}{K}
+	    \ForAll{face-edge pairs}
+	        \State Remove from canvas
+	        \State Remove from $U(\alpha)$
+	        \State Remove from $L(\alpha)$
+	    \EndFor
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Removing Edge-vertex pair}
+Edge-vertex are removed in a iterative pattern. We treat each violator/critical simplex as the pivot of the graph. For each violator/critical simplex, we perform a breadth first search for non-critical pairs and then remove each pair and pull its connecting component to the pivot. We do this until there are no more non-critical pairs around that pivot and then proceed to the next pivot. The algorithms is as follows,
+
+\begin{algorithm}
+	\caption{Removing Edge-vertex Pair}\label{v4}
+	\begin{algorithmic}[0]
+	    \Function{evRemoval}{K}
+	    \ForAll{violator/critical simplices $p$}
+	        \Repeat{}
+	        \ForAll{adjacent simplices $\alpha$}
+	            \If{$\alpha$ is an element of a pair $\alpha - \beta$}
+	                \State Pull the connecting component of $\beta$ to $p$
+	                \State Remove $\alpha - \beta$
+	            \EndIf
+	        \EndFor
+	        \Until{no adjacent simplices of $p$ are non-critical}
+	        \State 
+	    \EndFor
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+Moreover, animation is performed when doing the Edge-vertex pair removal. It takes two steps to finish the removal animation,
+\begin{enumerate}
+    \item Move the connecting component one the other side to the pivot.
+    \item Update the adjacency information of the connecting component.
+    \item Remove the non-critical pair.
+\end{enumerate}
+
+\subsection{Corner Case}
+Some corner cases might show up during the non-critical pairs removal. The solutions are as follows,
+\begin{itemize}
+    \item \textbf{Self-looping Edge} \\
+    Pre-define the path as two curves connecting together.
+    \item \textbf{Collinear Edges} \\
+    Pre-calculate the number of collinear edges, pre-define the path as a left curve for the first colliner edge and a right curve for the second colliear edge.
+    \item \textbf{Degenerated Face as a line} \\
+    Pre-define the path as two curves connecting the two distinct points with colored fill and none stroke.
+    \item \textbf{Degenerated Face as a point} \\
+    Pre-define the path as two curves connecting the distinct point and a point below that point with colored fill and none stroke.
+\end{itemize}
+
+\section{Visual Design}
+The main interface has three parts,
+\begin{enumerate}
+    \item The above panel for selecting files and controlling progress pipeline.
+    \item The left part of main space is the illustration for algorithm \ref{v1}.
+    \item The right part of main space is the illustration for algorithm \ref{v2}.
+\end{enumerate}
+With each illustration, both text description and graph demonstration are shown synchronously. Moreover, the interface is responsive to the resolution of the device screen.
+
+\section{Results}
+Below is a screen capture of the main interface,
+\begin{figure}[H]
+\centering{
+\includegraphics[width=.8\linewidth]{pic1.png}
+}
+\label{fig:name}
+\end{figure}
+
+The following series of screen captures shows the process of simplying a simplicial complex,
+
+\begin{figure}[H]
+\centering{
+\includegraphics[width=.15\linewidth]{stepa1.png}
+\includegraphics[width=.15\linewidth]{stepa2.png}
+\includegraphics[width=.15\linewidth]{stepa3.png}
+\includegraphics[width=.15\linewidth]{stepa4.png}
+\includegraphics[width=.15\linewidth]{stepa5.png}
+}
+\caption{Algorithm 1}
+\label{fig:name}
+\end{figure}
+
+\begin{figure}[H]
+\centering{
+\includegraphics[width=.15\linewidth]{stepb1.png}
+\includegraphics[width=.15\linewidth]{stepb2.png}
+\includegraphics[width=.15\linewidth]{stepb3.png}
+\includegraphics[width=.15\linewidth]{stepb4.png}
+\includegraphics[width=.15\linewidth]{stepb5.png}
+\includegraphics[width=.15\linewidth]{stepb6.png}
+}
+\caption{Algorithm 2}
+\label{fig:name}
+\end{figure}
+
+This visualization tool can be visited via the link \url{https://leong1016.github.io/dsmt/}. 
+
+\section{Conclusion and discussions}
+This visualization tool supports most of the 2d simplicial complex with any function on the simplices. It can serve the purpose of education as well as demonstration. However, there are also something to be improved,
+\begin{itemize}
+    \item Increasing the robustness of the visualization to support every 2d simplicial complex.
+    \item Using a slider with scales to control the steps in the pipeline of simplification.
+    \item Using 3d instead of 2d visualization, treating function value as elevation.
+    \item Extending the support for 3d tetrahedrons.
+\end{itemize}
+
+\end{document}

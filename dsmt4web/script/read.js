@@ -11,8 +11,6 @@ class Read {
     
     readOFF(off)
     {
-        console.log(off);
-
         let lines = off.split('\n');
         let stats = lines[1].split(' ');
 
